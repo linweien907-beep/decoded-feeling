@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KISHIMISU - 36-Core Matrix (Unified Lens Edition)</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@1,200;1,300&family=Inter:wght@100;300;400;600;700&display=swap');
+
+    /* 左右分栏布局 */
+    body { 
+        margin: 0; padding: 0; overflow: hidden; 
+        background: #e8eff5; font-family: 'Inter', sans-serif; color: #1a252f; 
+        display: flex; width: 100vw; height: 100vh;
+    }
+
+    @keyframes blurFadeIn {
+        from { opacity: 0; filter: blur(10px); transform: translateY(5px); }
+        to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+
+    /* ==========================================
+       左侧：固定文本面板 (UI Panel)
+       ========================================== */
+    #ui-panel {
+        width: 460px; min-width: 460px; height: 100vh;
+        padding: 50px; box-sizing: border-box;
+        display: flex; flex-direction: column; justify-content: space-between;
+        z-index: 10;
+        background: linear-gradient(to right, rgba(232,239,245,1) 80%, rgba(232,239,245,0) 100%);
+    }
+
+    .back-button {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.5em;
+        text-decoration: none; color: #1a252f;
+        opacity: 0; animation: blurFadeIn 1s ease forwards 0.5s;
+        display: inline-block; margin-bottom: 40px;
+    }
+
+    .slogan-1 {
+        font-family: 'Crimson Pro', serif; font-size: 28px; font-style: italic; font-weight: 300;
+        color: #34495e; display: block; opacity: 0;
+        animation: blurFadeIn 1.5s ease forwards 1s;
+    }
+    
+    .slogan-2 {
+        font-size: 13px; font-weight: 300; letter-spacing: 0.08em; color: #7f8c8d;
+        display: block; margin-top: 15px; opacity: 0; line-height: 1.8;
+        animation: blurFadeIn 1.5s ease forwards 1.5s;
+    }
+    
+    .emphasize { font-weight: 700; color: #1a252f; border-bottom: 1px solid rgba(26, 37, 47, 0.2); padding-bottom: 2px;}
+
+    .spec-panel {
+        text-align: left; 
+        opacity: 0; animation: blurFadeIn 1.5s ease forwards 2.5s;
+        background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        padding: 25px 30px; border-left: 2px solid rgba(26, 37, 47, 0.15);
+        border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        margin-bottom: 25px;
+    }
+
+    .spec-title {
+        font-family: 'Crimson Pro', serif; font-size: 16px; font-style: italic; font-weight: 300;
+        color: #2c3e50; margin-bottom: 14px; letter-spacing: 0.05em;
+    }
+
+    .spec-content { font-size: 11.5px; line-height: 2.1; font-weight: 300; color: #7f8c8d; letter-spacing: 0.02em; }
+    .spec-content strong { font-weight: 700; color: #34495e; }
+    .spec-divider { width: 30px; height: 1px; background: rgba(26, 37, 47, 0.15); margin: 16px 0; }
+
+    /* 模式切换开关 UI */
+    .mode-switch {
+        display: flex; align-items: center; gap: 15px; cursor: pointer;
+        margin-bottom: 25px; opacity: 0; animation: blurFadeIn 1s ease forwards 2.8s;
+        width: fit-content;
+    }
+    
+    .switch-track {
+        width: 44px; height: 22px; border-radius: 22px;
+        background: rgba(26, 37, 47, 0.2);
+        position: relative; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .switch-thumb {
+        width: 16px; height: 16px; border-radius: 50%; background: #ffffff;
+        position: absolute; top: 3px; left: 3px; 
+        transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 开关激活状态 (Cyber Mode) */
+    .switch-track.active { background: #00f5ff; box-shadow: 0 0 15px rgba(0,245,255,0.4), inset 0 2px 4px rgba(0,0,0,0.1); }
+    .switch-track.active .switch-thumb { left: 25px; }
+
+    #mode-label {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #34495e; transition: 0.3s;
+    }
+    .mode-switch:hover #mode-label { color: #1a252f; }
+
+    #engine-ui {
+        font-size: 9px; letter-spacing: 2px; color: #95a5a6;
+        opacity: 0; animation: blurFadeIn 1s ease forwards 3s;
+    }
+    #engine-ui b { color: #1a252f; margin-left: 5px; }
+
+    /* ==========================================
+       右侧：画布面板 (Canvas Panel)
+       ========================================== */
+    #canvas-panel {
+        flex-grow: 1; position: relative; height: 100vh;
+        cursor: crosshair;
+    }
+
+    #microscope-opt {
+        position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;
+        background: #e8eff5;
+        opacity: 1; transition: opacity 0.1s;
+    }
+
+    #microscope-cyb {
+        position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%;
+        background: #e8eff5;
+        opacity: 0; transition: opacity 0.1s;
+        pointer-events: none;
+    }
+
+    /* ==========================================
+       HUD 浮窗提示
+       ========================================== */
+    #emotion-tooltip {
+        position: fixed; pointer-events: none; opacity: 0;
+        background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        color: #4a4d49; padding: 6px 14px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.1em;
+        z-index: 1000; transition: opacity 0.3s ease;
+        display: flex; align-items: center; gap: 8px;
+    }
+    
+    .emotion-name {
+        color: #1a252f; font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+        margin-top: 0; border-left: 1px solid rgba(26, 37, 47, 0.2); padding-left: 8px; display: inline-block;
+    }
+</style>
+</head>
+<body>
+
+<div id="emotion-tooltip"></div>
+
+<div id="ui-panel">
+    <div>
+        <a href="index.html#menu" class="back-button">← INDEX</a>
+        <div class="floating-concept">
+            <span class="slogan-1">36-core micro-algae matrix;</span>
+            <span class="slogan-2">From authentic microscopic observation to <span class="emphasize">creative computational expression.</span> Translating the structural elegance of real algae forms into autonomous, code-driven digital organisms.</span>
+        </div>
+    </div>
+
+    <div>
+        <div class="spec-panel">
+            <div class="spec-title">Observation Log // 01</div>
+            <div class="spec-content">
+                <strong>Observation:</strong> Documenting the raw morphology of 36 distinct algae species under the lens—capturing their genuine geometric precision and cellular rhythms.
+                <div class="spec-divider"></div>
+                <strong>Expression:</strong> Translating biological truths into digital life. Sine waves and procedural noise replace physical flagella, synthesizing organic movement into pure mathematical respiration.
+            </div>
+        </div>
+
+        <div class="mode-switch" onclick="toggleMode()">
+            <div class="switch-track" id="switch-track">
+                <div class="switch-thumb"></div>
+            </div>
+            <span id="mode-label">LENS: OPTICAL</span>
+        </div>
+
+        <div id="engine-ui">
+            MATRIX_STATUS // TEMP <b id="temp-val">0</b>°C // VITALITY <b id="vital-val">0</b>%
+        </div>
+    </div>
+</div>
+
+<div id="canvas-panel">
+    <canvas id="microscope-opt"></canvas>
+    <canvas id="microscope-cyb"></canvas>
+</div>
+
+<script>
+    const panel = document.getElementById('canvas-panel');
+    const canvasOpt = document.getElementById('microscope-opt');
+    const ctxOpt = canvasOpt.getContext('2d');
+    const canvasCyb = document.getElementById('microscope-cyb');
+    const ctxCyb = canvasCyb.getContext('2d');
+    const tooltip = document.getElementById('emotion-tooltip');
+
+    let ctx; 
+    let isCyberMode = false;
+    let cyberProgress = 0.0; 
+
+    function toggleMode() {
+        isCyberMode = !isCyberMode;
+        document.getElementById('switch-track').classList.toggle('active');
+        document.getElementById('mode-label').innerText = isCyberMode ? "LENS: CYBER" : "LENS: OPTICAL";
+    }
+
+    function resize() {
+        canvasOpt.width = canvasCyb.width = panel.clientWidth;
+        canvasOpt.height = canvasCyb.height = panel.clientHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawBaseCellOpt(pathFn, pattern, shadowBlur = 5, hasInnerShadow = true) {
+        ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = shadowBlur;
+        ctx.beginPath(); pathFn(ctx); ctx.fillStyle = pattern; ctx.fill();
+        if(hasInnerShadow) { ctx.shadowColor = 'transparent'; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fill(); }
+        ctx.shadowColor = 'transparent'; ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.stroke();
+    }
+    function drawMucilageOpt(x, y, radius) {
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.stroke();
+    }
+
+    function drawBaseCellCyb(pathFn, color, glowSize = 15, hasInner = true) {
+        ctx.save(); ctx.shadowColor = color; ctx.shadowBlur = glowSize;
+        ctx.beginPath(); pathFn(ctx);
+        let rgb = color.match(/\d+/g);
+        ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.15)`; ctx.fill();
+        ctx.shadowBlur = 0; ctx.lineWidth = 1.5; ctx.strokeStyle = color; ctx.stroke();
+        ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.stroke();
+        if(hasInner) { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill(); }
+        ctx.restore();
+    }
+    function drawMucilageCyb(x, y, radius) {
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(26, 37, 47, 0.1)'; ctx.lineWidth = 1; ctx.stroke();
+    }
+
+    function createTexture(baseColor, dotColor1, dotColor2, hasPyrenoid = false) {
+        const c = document.createElement('canvas');
+        c.width = 150; c.height = 150; const x = c.getContext('2d');
+        x.fillStyle = baseColor; x.fillRect(0, 0, 150, 150);
+        for(let i = 0; i < 3500; i++) {
+            x.fillStyle = Math.random() > 0.5 ? dotColor1 : dotColor2;
+            x.beginPath(); x.arc(Math.random()*150, Math.random()*150, Math.random()*2+0.5, 0, Math.PI*2); x.fill();
+        }
+        if(hasPyrenoid){
+            for(let i = 0; i < 40; i++) {
+                x.fillStyle = 'rgba(230, 255, 150, 0.4)';
+                x.beginPath(); x.arc(Math.random()*150, Math.random()*150, Math.random()*4+1.5, 0, Math.PI*2); x.fill();
+            }
+        }
+        return ctxOpt.createPattern(c, 'repeat');
+    }
+    const patternGreen = createTexture('#6a9c27', 'rgba(40,70,10,0.5)', 'rgba(150,210,40,0.6)', true);
+    const patternGold = createTexture('#a68b42', 'rgba(80,60,20,0.5)', 'rgba(200,180,80,0.5)', false);
+    const patternRed = createTexture('#c94c16', 'rgba(120,20,0,0.5)', 'rgba(255,100,20,0.6)', false);
+
+    const C = 'rgba(0, 245, 255, 1)', G = 'rgba(113, 255, 0, 1)', M = 'rgba(255, 0, 150, 1)', 
+          O = 'rgba(255, 100, 0, 1)', P = 'rgba(200, 0, 255, 1)', Y = 'rgba(255, 200, 0, 1)', 
+          W = 'rgba(255, 255, 255, 0.9)';
+
+    const renderFnsOpt = [
+        function rChroococcus() { drawMucilageOpt(0,0,55); drawMucilageOpt(-20,-20,25); drawBaseCellOpt(c=>c.arc(-25,-25,9,0,Math.PI*2), patternGreen, 2); drawMucilageOpt(20,-10,28); drawBaseCellOpt(c=>c.arc(12,-15,8,0,Math.PI*2), patternGreen, 2); drawBaseCellOpt(c=>c.arc(28,-5,8,0,Math.PI*2), patternGreen, 2); drawMucilageOpt(-10,25,26); drawBaseCellOpt(c=>c.arc(-18,20,8,0,Math.PI*2), patternGreen, 2); drawBaseCellOpt(c=>c.arc(-2,30,8,0,Math.PI*2), patternGreen, 2); drawMucilageOpt(25,25,22); drawBaseCellOpt(c=>c.arc(25,25,12,0,Math.PI*2), patternGreen, 2); },
+        function rTetradesmus() { drawMucilageOpt(0,0,30); [-10,10].forEach(x => [-10,10].forEach(y => drawBaseCellOpt(c=>c.arc(x,y,8,0,Math.PI*2), patternGreen, 2))); },
+        function rOocystis() { ctx.rotate(Math.PI/6); ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=6; drawBaseCellOpt(c=>c.ellipse(0,0,28,20,0,0,Math.PI*2), patternGreen); ctx.shadowBlur=0; ctx.beginPath(); ctx.ellipse(0,0,36,26,0,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=3; ctx.stroke(); ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=1; ctx.stroke(); },
+        function rCoelastrum() { ctx.beginPath(); ctx.arc(0,0,32,0,Math.PI*2); ctx.fillStyle='rgba(30,50,10,0.8)'; ctx.fill(); for(let i=0;i<8;i++){ let a=(i/8)*Math.PI*2; drawBaseCellOpt(c=>c.arc(Math.cos(a)*25,Math.sin(a)*25,14,0,Math.PI*2), patternGreen,2); } [{x:-10,y:-10},{x:10,y:-8},{x:0,y:12},{x:0,y:0}].forEach(p=>drawBaseCellOpt(c=>c.arc(p.x,p.y,15,0,Math.PI*2), patternGreen,3)); },
+        function rCosmarium() { ctx.rotate(-Math.PI/8); drawBaseCellOpt(c=>{ c.arc(-20,0,28,Math.PI*0.3,Math.PI*1.7); c.lineTo(0,-8); c.lineTo(0,8); c.closePath(); }, patternGreen); drawBaseCellOpt(c=>{ c.arc(20,0,28,-Math.PI*0.7,Math.PI*0.7); c.lineTo(0,8); c.lineTo(0,-8); c.closePath(); }, patternGreen); },
+        function rPediastrum() { for(let i=0;i<5;i++){ let a=(i/5)*Math.PI*2; drawBaseCellOpt(c=>c.arc(Math.cos(a)*15,Math.sin(a)*15,10,0,Math.PI*2), patternGreen,2); } for(let i=0;i<10;i++){ let a=(i/10)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*32,Math.sin(a)*32); ctx.rotate(a+Math.PI/2); drawBaseCellOpt(c=>{ c.moveTo(-12,8); c.lineTo(12,8); c.lineTo(16,-4); c.lineTo(10,-20); c.lineTo(0,-10); c.lineTo(-10,-20); c.lineTo(-16,-4); c.closePath(); }, patternGreen,2); ctx.restore(); } },
+        function rScenedesmus() { ctx.rotate(-Math.PI/6); for(let r=0;r<2;r++){ for(let col=0;col<3;col++){ ctx.save(); ctx.translate(col*14-14, r*30-15); drawBaseCellOpt(c=>c.ellipse(0,0,7,16,0,0,Math.PI*2), patternGreen,2); ctx.restore(); }} },
+        function rFineFilament(t) { ctx.beginPath(); for(let i=-60; i<=60; i+=2){ let wave = Math.sin(i*0.1 + t)*3; if(i===-60) ctx.moveTo(i,wave); else ctx.lineTo(i,wave); } ctx.lineWidth=4; ctx.strokeStyle=patternGreen; ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.5)'; for(let i=-58; i<=58; i+=6){ let w=Math.sin(i*0.1+t)*3; ctx.beginPath(); ctx.moveTo(i,w-2); ctx.lineTo(i,w+2); ctx.stroke(); } ctx.lineWidth=6; ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.stroke(); },
+        function rHaematococcus() { ctx.beginPath(); ctx.arc(0,0,40,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.stroke(); drawBaseCellOpt(c=>c.arc(0,0,34,0,Math.PI*2), patternRed, 6); ctx.beginPath(); ctx.ellipse(-10,-12,16,8,Math.PI/4,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fill(); },
+        function rTwinColony() { [-20,20].forEach(cy => { ctx.save(); ctx.translate(0,cy); drawMucilageOpt(0,0,22); for(let i=0;i<7;i++){ let a=(i/7)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*10,Math.sin(a)*10); drawBaseCellOpt(c=>c.arc(0,0,6,0,Math.PI*2),patternGreen,2); ctx.restore(); } drawBaseCellOpt(c=>c.arc(0,0,6,0,Math.PI*2),patternGreen,2); ctx.restore(); }); },
+        function rMicrasterias() { ctx.rotate(Math.PI/12); let half = c => { c.moveTo(0,-3); c.lineTo(8,-5); c.lineTo(25,-12); c.lineTo(32,-4); c.lineTo(28,-16); c.lineTo(38,-20); c.lineTo(20,-20); c.lineTo(8,-12); c.lineTo(20,-28); c.lineTo(28,-28); c.lineTo(20,-38); c.lineTo(8,-32); c.lineTo(4,-42); c.lineTo(12,-50); c.lineTo(0,-45); }; drawBaseCellOpt(c=>{ half(c); ctx.save(); ctx.scale(-1,1); half(c); ctx.restore(); c.closePath(); }, patternGreen); drawBaseCellOpt(c=>{ ctx.save(); ctx.scale(1,-1); half(c); ctx.save(); ctx.scale(-1,1); half(c); ctx.restore(); c.closePath(); ctx.restore(); }, patternGreen); },
+        function rCoarseFilament() { ctx.rotate(-Math.PI/16); drawBaseCellOpt(c=>c.rect(-10,-60,20,120), patternGreen, 3); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.7)'; for(let i=-45; i<60; i+=18){ ctx.beginPath(); ctx.moveTo(-10,i); ctx.lineTo(10,i); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-10,i+1); ctx.lineTo(10,i+1); ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.stroke(); ctx.strokeStyle='rgba(0,0,0,0.7)'; } },
+        function rTriStaurastrum() { ctx.rotate(Math.PI/12); drawBaseCellOpt(c=>{ c.moveTo(0,-38); c.lineTo(6,-40); c.lineTo(3,-32); c.lineTo(20,-4); c.lineTo(32,18); c.lineTo(35,12); c.lineTo(28,20); c.lineTo(0,16); c.lineTo(-28,20); c.lineTo(-35,12); c.lineTo(-32,18); c.lineTo(-20,-4); c.lineTo(-3,-32); c.lineTo(-6,-40); c.closePath(); }, patternGreen, 5); ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fillStyle='rgba(200,220,50,0.4)'; ctx.fill(); },
+        function rFilamentPyrenoids() { ctx.rotate(-Math.PI/4); for(let i=0;i<4;i++){ let cy = i*28-42; ctx.save(); ctx.translate(0,cy); ctx.beginPath(); ctx.rect(-10,-14,20,28); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.stroke(); ctx.beginPath(); ctx.moveTo(-7,-9); ctx.lineTo(7,-6); ctx.lineTo(6,10); ctx.lineTo(-6,8); ctx.closePath(); ctx.fillStyle=patternGreen; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.stroke(); ctx.restore(); } },
+        function rOocystisPairs() { ctx.rotate(Math.PI/8); ctx.shadowColor='rgba(255,255,255,0.8)'; ctx.shadowBlur=8; ctx.beginPath(); ctx.ellipse(0,0,32,25,0,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.stroke(); ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.stroke(); [-13,13].forEach(ox=>{ ctx.save(); ctx.translate(ox,0); drawBaseCellOpt(c=>c.ellipse(0,0,12,18,0,0,Math.PI*2),patternGreen,2); ctx.restore(); }); ctx.beginPath(); ctx.ellipse(-6,-10,12,6,Math.PI/6,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fill(); },
+        function rChroococcusGroup() { ctx.beginPath(); ctx.moveTo(-18,-38); ctx.quadraticCurveTo(25,-45,35,-8); ctx.quadraticCurveTo(45,25,18,38); ctx.quadraticCurveTo(-25,45,-38,18); ctx.quadraticCurveTo(-45,-18,-18,-38); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.stroke(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.stroke(); [{x:-12,y:-18},{x:5,y:-20},{x:18,y:-8},{x:20,y:10},{x:5,y:20},{x:-12,y:16},{x:-20,y:0},{x:-4,y:4}].forEach(p=>drawBaseCellOpt(c=>c.arc(p.x,p.y,9,0,Math.PI*2),patternGreen,2)); },
+        function rGranularCosmarium() { let half = (cy, isTop) => { ctx.save(); ctx.translate(0,cy); ctx.beginPath(); if(isTop) ctx.arc(0,0,18,Math.PI*0.8,Math.PI*0.2,true); else ctx.arc(0,0,18,-Math.PI*0.8,-Math.PI*0.2,true); ctx.lineTo(4,isTop?6:-6); ctx.lineTo(-4,isTop?6:-6); ctx.closePath(); ctx.shadowColor='rgba(255,255,255,0.8)'; ctx.shadowBlur=5; ctx.fillStyle=patternGreen; ctx.fill(); ctx.shadowBlur=0; ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.stroke(); ctx.fillStyle='rgba(200,255,100,0.8)'; for(let a=Math.PI*0.1; a<Math.PI*0.9; a+=0.25){ let ang=isTop?-a:a; ctx.beginPath(); ctx.arc(Math.cos(ang)*19,Math.sin(ang)*19,1.5,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=0.5; ctx.stroke(); } ctx.restore(); }; half(-14, true); half(14, false); },
+        function rComplexPediastrum() { ctx.rotate(-Math.PI/10); for(let i=0; i<5; i++){ let a=(i/5)*Math.PI*2; drawBaseCellOpt(c=>c.arc(Math.cos(a)*14,Math.sin(a)*14,9,0,Math.PI*2),patternGreen,2); } for(let i=0; i<11; i++){ let a=(i/11)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*30,Math.sin(a)*30); ctx.rotate(a+Math.PI/2); drawBaseCellOpt(c=>{ c.moveTo(-8,8); c.lineTo(8,8); c.lineTo(12,-2); c.lineTo(15,-18); c.lineTo(4,-8); c.lineTo(0,-4); c.lineTo(-4,-8); c.lineTo(-15,-18); c.lineTo(-12,-2); c.closePath(); }, patternGreen,2); ctx.restore(); } ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2; ctx.stroke(); },
+        function rCloverColony() { ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.arc(0,-10,18,0,Math.PI*2); ctx.arc(-10,8,18,0,Math.PI*2); ctx.arc(10,8,18,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2; ctx.stroke(); [{x:0,y:-8},{x:-10,y:10},{x:10,y:10}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellOpt(c=>c.arc(0,0,12,0,Math.PI*2),patternGreen,3); ctx.restore(); }); },
+        function rBeadChain(t) { ctx.rotate(-Math.PI/3); ctx.beginPath(); for(let i=-50; i<=50; i+=10){ let w=Math.sin(i*0.05+t)*5; ctx.arc(i,w,12,0,Math.PI*2); } ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.stroke(); for(let i=-45; i<=45; i+=12){ let w=Math.sin(i*0.05+t)*5; ctx.save(); ctx.translate(i,w); drawBaseCellOpt(c=>c.arc(0,0,7,0,Math.PI*2),patternGreen,2); ctx.restore(); } },
+        function rEuastrum() { let half = c => { c.moveTo(0,-2); c.lineTo(12,-4); c.lineTo(20,-12); c.lineTo(20,-20); c.lineTo(12,-20); c.lineTo(15,-28); c.lineTo(10,-32); c.lineTo(4,-30); c.lineTo(2,-36); c.lineTo(0,-32); c.lineTo(-2,-36); c.lineTo(-4,-30); c.lineTo(-10,-32); c.lineTo(-15,-28); c.lineTo(-12,-20); c.lineTo(-20,-20); c.lineTo(-20,-12); c.lineTo(-12,-4); c.lineTo(0,-2); }; drawBaseCellOpt(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); }, patternGreen, 6); },
+        function rFlagellate(t) { ctx.rotate(Math.PI/8); let w1=Math.sin(t*5)*8, w2=Math.cos(t*5+1)*8; ctx.beginPath(); ctx.moveTo(0,-18); ctx.quadraticCurveTo(-12+w1,-35,-8+w1*2,-50); ctx.moveTo(0,-18); ctx.quadraticCurveTo(12+w2,-35,8+w2*2,-50); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.stroke(); ctx.lineWidth=0.5; ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.stroke(); drawBaseCellOpt(c=>{ c.ellipse(0,0,14,20,0,0,Math.PI*2); c.arc(0,-18,3,Math.PI,0); }, patternGreen, 4); ctx.beginPath(); ctx.arc(-6,-8,2.5,0,Math.PI*2); ctx.fillStyle='rgba(220,40,0,0.8)'; ctx.fill(); },
+        function rCentricDiatom() { ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(0,0,32,0,Math.PI*2); ctx.fillStyle=patternGold; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=4; ctx.strokeStyle='rgba(30,30,20,0.8)'; ctx.stroke(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.stroke(); ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1; for(let i=0; i<60; i++){ let a=(i/60)*Math.PI*2; ctx.beginPath(); ctx.moveTo(Math.cos(a)*8,Math.sin(a)*8); ctx.lineTo(Math.cos(a)*28,Math.sin(a)*28); ctx.stroke(); } ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fill(); },
+        function rPennateDiatom() { ctx.rotate(-Math.PI/5); const w=18, h=80; ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=6; ctx.beginPath(); ctx.arc(0,-h/2+w/2,w/2,Math.PI,0); ctx.lineTo(w/2,h/2-w/2); ctx.arc(0,h/2-w/2,w/2,0,Math.PI); ctx.closePath(); ctx.fillStyle='rgba(240,245,230,0.4)'; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=0.5; for(let i=-h/2+8; i<h/2-8; i+=2.5){ ctx.beginPath(); ctx.moveTo(-w/2+2,i); ctx.lineTo(-w/2+6,i); ctx.stroke(); ctx.beginPath(); ctx.moveTo(w/2-2,i); ctx.lineTo(w/2-6,i); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(0,-h/2+8); ctx.lineTo(0,h/2-8); ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=1.5; ctx.stroke(); [{y:-16},{y:16}].forEach(p=>{ ctx.beginPath(); ctx.ellipse(0,p.y,5,16,0,0,Math.PI*2); ctx.fillStyle=patternGold; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.stroke(); }); ctx.beginPath(); ctx.arc(0,-h/2+w/2,w/2,Math.PI,0); ctx.lineTo(w/2,h/2-w/2); ctx.arc(0,h/2-w/2,w/2,0,Math.PI); ctx.closePath(); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(20,20,10,0.8)'; ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.stroke(); },
+        function rDesmodesmus() { ctx.rotate(Math.PI/12); const w=10, h=30; for(let i=0; i<4; i++){ ctx.save(); ctx.translate((i-1.5)*(w*0.95),0); drawBaseCellOpt(c=>c.ellipse(0,0,w/2,h/2,0,0,Math.PI*2),patternGreen,2); ctx.restore(); } ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.moveTo(-1.5*w,-h/2); ctx.quadraticCurveTo(-20,-20,-25,-8); ctx.moveTo(-1.5*w,h/2); ctx.quadraticCurveTo(-20,20,-25,8); ctx.moveTo(1.5*w,-h/2); ctx.quadraticCurveTo(20,-20,25,-8); ctx.moveTo(1.5*w,h/2); ctx.quadraticCurveTo(20,20,25,8); ctx.stroke(); ctx.lineWidth=0.5; ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.stroke(); },
+        function rSmoothCosmarium() { let half=c=>{ c.arc(0,-14,20,Math.PI*0.8,Math.PI*0.2); c.lineTo(4,-1.5); c.lineTo(0,0); c.lineTo(-4,-1.5); c.closePath(); }; drawBaseCellOpt(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); },patternGreen,6); },
+        function rOocystis4() { ctx.rotate(-Math.PI/8); ctx.shadowColor='rgba(255,255,255,0.8)'; ctx.shadowBlur=8; ctx.beginPath(); ctx.ellipse(0,0,30,26,0,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.stroke(); ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.stroke(); [{x:-10,y:-8,a:-0.2},{x:10,y:-8,a:0.2},{x:-8,y:10,a:0.1},{x:8,y:10,a:-0.1}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); drawBaseCellOpt(c=>c.ellipse(0,0,8,12,0,0,Math.PI*2),patternGreen,2); ctx.restore(); }); },
+        function rNavicula() { ctx.rotate(Math.PI/4); ctx.shadowColor='rgba(255,255,255,0.9)'; ctx.shadowBlur=5; ctx.beginPath(); ctx.moveTo(0,-38); ctx.quadraticCurveTo(12,-12,12,0); ctx.quadraticCurveTo(12,12,0,38); ctx.quadraticCurveTo(-12,12,-12,0); ctx.quadraticCurveTo(-12,-12,0,-38); ctx.closePath(); ctx.fillStyle='rgba(230,240,220,0.5)'; ctx.fill(); ctx.shadowBlur=0; ctx.save(); ctx.clip(); ctx.beginPath(); ctx.ellipse(5,0,4,20,0,0,Math.PI*2); ctx.fillStyle=patternGold; ctx.fill(); ctx.beginPath(); ctx.ellipse(-5,0,4,20,0,0,Math.PI*2); ctx.fillStyle=patternGold; ctx.fill(); ctx.restore(); ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=0.5; for(let i=-30; i<=30; i+=2.5){ let w=Math.cos(i/30*Math.PI/2)*10; ctx.beginPath(); ctx.moveTo(-w,i); ctx.lineTo(w,i); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(0,-34); ctx.lineTo(0,34); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1; ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,-38); ctx.quadraticCurveTo(12,-12,12,0); ctx.quadraticCurveTo(12,12,0,38); ctx.quadraticCurveTo(-12,12,-12,0); ctx.quadraticCurveTo(-12,-12,0,-38); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.stroke(); },
+        function rPediastrumPlate() { drawBaseCellOpt(c=>{ c.moveTo(0,-28); c.lineTo(8,-24); c.lineTo(12,-32); c.lineTo(16,-20); c.lineTo(28,-16); c.lineTo(24,-4); c.lineTo(32,4); c.lineTo(20,12); c.lineTo(16,24); c.lineTo(4,20); c.lineTo(0,32); c.lineTo(-8,24); c.lineTo(-16,28); c.lineTo(-20,16); c.lineTo(-30,8); c.lineTo(-24,0); c.lineTo(-32,-12); c.lineTo(-20,-16); c.lineTo(-16,-28); c.lineTo(-4,-22); c.lineTo(0,-28); },patternGreen,5); ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,-12); ctx.lineTo(8,-24); ctx.stroke(); ctx.beginPath(); ctx.moveTo(12,0); ctx.lineTo(24,-4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-8,8); ctx.lineTo(-20,16); ctx.stroke(); },
+        function rPairedCells() { ctx.rotate(Math.PI/16); ctx.save(); ctx.translate(2,-14); ctx.rotate(-0.1); drawBaseCellOpt(c=>c.ellipse(0,0,11,16,0,0,Math.PI*2),patternGreen,3); ctx.fillStyle='rgba(100,150,40,0.8)'; ctx.beginPath(); ctx.arc(-4,-9,2.5,0,Math.PI*2); ctx.fill(); ctx.restore(); ctx.save(); ctx.translate(-2,14); ctx.rotate(0.1); drawBaseCellOpt(c=>c.ellipse(0,0,10,15,0,0,Math.PI*2),patternGreen,3); ctx.restore(); },
+        function rEudorinaBlob() { ctx.rotate(Math.PI/8); ctx.shadowColor='rgba(255,255,255,0.8)'; ctx.shadowBlur=10; ctx.beginPath(); ctx.ellipse(0,0,38,34,0,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.stroke(); ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.stroke(); [{x:-20,y:-8},{x:-8,y:-20},{x:8,y:-20},{x:20,y:-8},{x:-20,y:12},{x:-8,y:20},{x:16,y:12}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellOpt(c=>c.arc(0,0,6.5,0,Math.PI*2),patternGreen,3); ctx.restore(); }); },
+        function rTaperFilament2(t) { ctx.rotate(Math.PI/10); let len=110; drawBaseCellOpt(c=>{ c.moveTo(-len/2,-4); c.lineTo(len/2,-1); c.arc(len/2,0,1,-Math.PI/2,Math.PI/2); c.lineTo(-len/2,4); c.arc(-len/2,0,4,Math.PI/2,-Math.PI/2); c.closePath(); }, patternGreen,4); ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.6)'; for(let i=-len/2+8; i<len/2-4; i+=6){ let h=4*(1-(i+len/2)/len)+1; ctx.beginPath(); ctx.moveTo(i,-h); ctx.lineTo(i,h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(i+1,-h); ctx.lineTo(i+1,h); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.stroke(); ctx.strokeStyle='rgba(0,0,0,0.6)'; } ctx.beginPath(); ctx.arc(-len/2-3.5,0,3.5,0,Math.PI*2); ctx.fillStyle='rgba(200,220,100,0.6)'; ctx.fill(); ctx.stroke(); },
+        function rDenseCluster2() { ctx.rotate(-Math.PI/12); let n=[{x:0,y:0},{x:-12,y:-8},{x:12,y:-8},{x:0,y:-18},{x:-8,y:12},{x:10,y:10},{x:-20,y:4},{x:20,y:4},{x:-14,y:-20},{x:14,y:-20},{x:0,y:20},{x:28,y:-4}]; ctx.beginPath(); n.forEach(p=>{ ctx.moveTo(p.x,p.y); ctx.arc(p.x,p.y,13,0,Math.PI*2); }); ctx.fillStyle='rgba(20,40,0,0.8)'; ctx.fill(); n.forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellOpt(c=>c.arc(0,0,11,0,Math.PI*2),patternGreen,3); ctx.restore(); }); },
+        function rAngularCosmarium2() { let half=c=>{ c.moveTo(0,-2); c.lineTo(10,-4); c.lineTo(20,-12); c.lineTo(18,-24); c.lineTo(6,-34); c.lineTo(-6,-34); c.lineTo(-18,-24); c.lineTo(-20,-12); c.lineTo(-10,-4); c.lineTo(0,-2); c.closePath(); }; drawBaseCellOpt(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); }, patternGreen, 6); ctx.fillStyle='rgba(255,255,255,0.3)'; for(let i=0;i<40;i++){ let px=(Math.random()-0.5)*32, py=(Math.random()-0.5)*64; if(Math.abs(py)>6 && px*px+(Math.abs(py)-16)**2<300){ ctx.beginPath(); ctx.arc(px,py,0.8,0,Math.PI*2); ctx.fill(); } } },
+        function rSpikyStaurastrum2() { ctx.rotate(-Math.PI/6); let half=c=>{ c.moveTo(0,-4); c.lineTo(6,-6); c.lineTo(20,-12); c.lineTo(28,-22); c.lineTo(30,-20); c.lineTo(25,-14); c.lineTo(32,-10); c.lineTo(24,-10); c.lineTo(12,0); c.lineTo(24,10); c.lineTo(32,10); c.lineTo(25,14); c.lineTo(30,20); c.lineTo(28,22); c.lineTo(20,12); c.lineTo(6,6); c.lineTo(0,4); }; drawBaseCellOpt(c=>{ ctx.beginPath(); half(c); ctx.save(); ctx.scale(-1,-1); half(c); ctx.restore(); }, patternGreen, 5); },
+        function rFenestratedPediastrum2() { ctx.rotate(Math.PI/12); for(let i=0;i<5;i++){ let a=(i/5)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*12,Math.sin(a)*12); ctx.rotate(a+Math.PI/2); drawBaseCellOpt(c=>{ c.moveTo(-8,6); c.quadraticCurveTo(0,0,8,6); c.lineTo(10,-4); c.quadraticCurveTo(0,0,-10,-4); c.closePath(); },patternGreen,2); ctx.restore(); } for(let i=0;i<10;i++){ let a=(i/10)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*28,Math.sin(a)*28); ctx.rotate(a+Math.PI/2); drawBaseCellOpt(c=>{ c.moveTo(-6,10); c.quadraticCurveTo(0,4,6,10); c.lineTo(11,0); c.lineTo(18,-20); c.lineTo(8,-10); c.lineTo(0,-4); c.lineTo(-8,-10); c.lineTo(-18,-20); c.lineTo(-11,0); c.closePath(); },patternGreen,2); ctx.restore(); } ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2; ctx.stroke(); }
+    ];
+
+    const renderFnsCyb = [
+        function rChroococcus() { drawMucilageCyb(0,0,55); drawBaseCellCyb(c=>c.arc(-25,-25,9,0,Math.PI*2), G); drawBaseCellCyb(c=>c.arc(12,-15,8,0,Math.PI*2), C); drawBaseCellCyb(c=>c.arc(28,-5,8,0,Math.PI*2), C); drawBaseCellCyb(c=>c.arc(-18,20,8,0,Math.PI*2), G); drawBaseCellCyb(c=>c.arc(-2,30,8,0,Math.PI*2), G); drawBaseCellCyb(c=>c.arc(25,25,12,0,Math.PI*2), M); },
+        function rTetradesmus() { drawMucilageCyb(0,0,30); [-10,10].forEach(x => [-10,10].forEach(y => drawBaseCellCyb(c=>c.arc(x,y,8,0,Math.PI*2), C))); },
+        function rOocystis() { ctx.rotate(Math.PI/6); drawBaseCellCyb(c=>c.ellipse(0,0,28,20,0,0,Math.PI*2), G); ctx.beginPath(); ctx.ellipse(0,0,36,26,0,0,Math.PI*2); ctx.strokeStyle='rgba(26,37,47,0.2)'; ctx.stroke(); },
+        function rCoelastrum() { for(let i=0;i<8;i++){ let a=(i/8)*Math.PI*2; drawBaseCellCyb(c=>c.arc(Math.cos(a)*25,Math.sin(a)*25,14,0,Math.PI*2), C); } [{x:-10,y:-10},{x:10,y:-8},{x:0,y:0}].forEach(p=>drawBaseCellCyb(c=>c.arc(p.x,p.y,15,0,Math.PI*2), G)); },
+        function rCosmarium() { ctx.rotate(-Math.PI/8); drawBaseCellCyb(c=>{ c.arc(-20,0,28,Math.PI*0.3,Math.PI*1.7); c.lineTo(0,-8); c.lineTo(0,8); c.closePath(); }, P); drawBaseCellCyb(c=>{ c.arc(20,0,28,-Math.PI*0.7,Math.PI*0.7); c.lineTo(0,8); c.lineTo(0,-8); c.closePath(); }, P); },
+        function rPediastrum() { for(let i=0;i<5;i++){ let a=(i/5)*Math.PI*2; drawBaseCellCyb(c=>c.arc(Math.cos(a)*15,Math.sin(a)*15,10,0,Math.PI*2), G); } for(let i=0;i<10;i++){ let a=(i/10)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*32,Math.sin(a)*32); ctx.rotate(a+Math.PI/2); drawBaseCellCyb(c=>{ c.moveTo(-12,8); c.lineTo(12,8); c.lineTo(16,-4); c.lineTo(10,-20); c.lineTo(0,-10); c.lineTo(-10,-20); c.lineTo(-16,-4); c.closePath(); }, C); ctx.restore(); } },
+        function rScenedesmus() { ctx.rotate(-Math.PI/6); for(let r=0;r<2;r++){ for(let col=0;col<3;col++){ ctx.save(); ctx.translate(col*14-14, r*30-15); drawBaseCellCyb(c=>c.ellipse(0,0,7,16,0,0,Math.PI*2), G); ctx.restore(); }} },
+        function rFineFilament(t) { ctx.beginPath(); for(let i=-60; i<=60; i+=2){ let wave = Math.sin(i*0.1 + t)*3; if(i===-60) ctx.moveTo(i,wave); else ctx.lineTo(i,wave); } ctx.shadowColor=C; ctx.shadowBlur=10; ctx.strokeStyle=C; ctx.lineWidth=3; ctx.stroke(); ctx.shadowBlur=0; },
+        function rHaematococcus() { drawMucilageCyb(0,0,40); drawBaseCellCyb(c=>c.arc(0,0,34,0,Math.PI*2), M, 20); ctx.beginPath(); ctx.ellipse(-10,-12,16,8,Math.PI/4,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fill(); },
+        function rTwinColony(t) { [-20,20].forEach(cy => { ctx.save(); ctx.translate(0,cy); drawMucilageCyb(0,0,22); for(let i=0;i<7;i++){ let a=(i/7)*Math.PI*2+t; ctx.save(); ctx.translate(Math.cos(a)*10,Math.sin(a)*10); drawBaseCellCyb(c=>c.arc(0,0,6,0,Math.PI*2),G); ctx.restore(); } ctx.restore(); }); },
+        function rMicrasterias() { ctx.rotate(Math.PI/12); let half = c => { c.moveTo(0,-3); c.lineTo(8,-5); c.lineTo(25,-12); c.lineTo(32,-4); c.lineTo(28,-16); c.lineTo(38,-20); c.lineTo(20,-20); c.lineTo(8,-12); c.lineTo(20,-28); c.lineTo(28,-28); c.lineTo(20,-38); c.lineTo(8,-32); c.lineTo(4,-42); c.lineTo(12,-50); c.lineTo(0,-45); }; drawBaseCellCyb(c=>{ half(c); ctx.save(); ctx.scale(-1,1); half(c); ctx.restore(); c.closePath(); }, P); drawBaseCellCyb(c=>{ ctx.save(); ctx.scale(1,-1); half(c); ctx.save(); ctx.scale(-1,1); half(c); ctx.restore(); c.closePath(); ctx.restore(); }, P); },
+        function rCoarseFilament() { ctx.rotate(-Math.PI/16); drawBaseCellCyb(c=>c.rect(-10,-60,20,120), C); for(let i=-45; i<60; i+=18){ ctx.beginPath(); ctx.moveTo(-10,i); ctx.lineTo(10,i); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.stroke(); } },
+        function rTriStaurastrum() { drawBaseCellCyb(c=>{ c.moveTo(0,-38); c.lineTo(6,-40); c.lineTo(3,-32); c.lineTo(20,-4); c.lineTo(32,18); c.lineTo(35,12); c.lineTo(28,20); c.lineTo(0,16); c.lineTo(-28,20); c.lineTo(-35,12); c.lineTo(-32,18); c.lineTo(-20,-4); c.lineTo(-3,-32); c.lineTo(-6,-40); c.closePath(); }, G); },
+        function rFilamentPyrenoids() { ctx.rotate(-Math.PI/4); for(let i=0;i<4;i++){ let cy = i*28-42; ctx.save(); ctx.translate(0,cy); drawBaseCellCyb(c=>c.rect(-7,-9,14,18), C); ctx.restore(); } },
+        function rOocystisPairs() { ctx.rotate(Math.PI/8); drawMucilageCyb(0,0,32); [-13,13].forEach(ox=>{ ctx.save(); ctx.translate(ox,0); drawBaseCellCyb(c=>c.ellipse(0,0,12,18,0,0,Math.PI*2),G); ctx.restore(); }); },
+        function rChroococcusGroup() { drawMucilageCyb(0,0,45); [{x:-12,y:-18},{x:5,y:-20},{x:18,y:-8},{x:20,y:10},{x:5,y:20},{x:-12,y:16},{x:-20,y:0},{x:-4,y:4}].forEach(p=>drawBaseCellCyb(c=>c.arc(p.x,p.y,9,0,Math.PI*2),C)); },
+        function rGranularCosmarium() { let half = (cy, isTop) => { ctx.save(); ctx.translate(0,cy); drawBaseCellCyb(c=>{ if(isTop) c.arc(0,0,18,Math.PI*0.8,Math.PI*0.2,true); else c.arc(0,0,18,-Math.PI*0.8,-Math.PI*0.2,true); c.lineTo(4,isTop?6:-6); c.lineTo(-4,isTop?6:-6); c.closePath(); }, P); ctx.restore(); }; half(-14, true); half(14, false); },
+        function rComplexPediastrum() { for(let i=0; i<5; i++){ let a=(i/5)*Math.PI*2; drawBaseCellCyb(c=>c.arc(Math.cos(a)*14,Math.sin(a)*14,9,0,Math.PI*2),G); } for(let i=0; i<11; i++){ let a=(i/11)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*30,Math.sin(a)*30); ctx.rotate(a+Math.PI/2); drawBaseCellCyb(c=>{ c.moveTo(-8,8); c.lineTo(8,8); c.lineTo(12,-2); c.lineTo(15,-18); c.lineTo(4,-8); c.lineTo(0,-4); c.lineTo(-4,-8); c.lineTo(-15,-18); c.lineTo(-12,-2); c.closePath(); }, C); ctx.restore(); } },
+        function rCloverColony() { ctx.rotate(Math.PI/6); drawMucilageCyb(0,-10,18); drawMucilageCyb(-10,8,18); drawMucilageCyb(10,8,18); [{x:0,y:-8},{x:-10,y:10},{x:10,y:10}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellCyb(c=>c.arc(0,0,12,0,Math.PI*2),G); ctx.restore(); }); },
+        function rBeadChain(t) { ctx.rotate(-Math.PI/3); for(let i=-45; i<=45; i+=12){ let w=Math.sin(i*0.05+t)*5; ctx.save(); ctx.translate(i,w); drawBaseCellCyb(c=>c.arc(0,0,7,0,Math.PI*2),C); ctx.restore(); } },
+        function rEuastrum() { let half = c => { c.moveTo(0,-2); c.lineTo(12,-4); c.lineTo(20,-12); c.lineTo(20,-20); c.lineTo(12,-20); c.lineTo(15,-28); c.lineTo(10,-32); c.lineTo(4,-30); c.lineTo(2,-36); c.lineTo(0,-32); c.lineTo(-2,-36); c.lineTo(-4,-30); c.lineTo(-10,-32); c.lineTo(-15,-28); c.lineTo(-12,-20); c.lineTo(-20,-20); c.lineTo(-20,-12); c.lineTo(-12,-4); c.lineTo(0,-2); }; drawBaseCellCyb(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); }, P); },
+        function rFlagellate(t) { let w1=Math.sin(t*5)*8, w2=Math.cos(t*5+1)*8; ctx.beginPath(); ctx.moveTo(0,-18); ctx.quadraticCurveTo(-12+w1,-35,-8+w1*2,-50); ctx.moveTo(0,-18); ctx.quadraticCurveTo(12+w2,-35,8+w2*2,-50); ctx.strokeStyle=C; ctx.stroke(); drawBaseCellCyb(c=>{ c.ellipse(0,0,14,20,0,0,Math.PI*2); }, G); ctx.beginPath(); ctx.arc(-6,-8,2.5,0,Math.PI*2); ctx.fillStyle=M; ctx.fill(); },
+        function rCentricDiatom() { drawBaseCellCyb(c=>c.arc(0,0,32,0,Math.PI*2), Y, 20); for(let i=0; i<60; i++){ let a=(i/60)*Math.PI*2; ctx.beginPath(); ctx.moveTo(Math.cos(a)*8,Math.sin(a)*8); ctx.lineTo(Math.cos(a)*28,Math.sin(a)*28); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.stroke(); } },
+        function rPennateDiatom() { ctx.rotate(-Math.PI/5); drawBaseCellCyb(c=>{ c.ellipse(0,0,12,40,0,0,Math.PI*2); }, Y); [{y:-16},{y:16}].forEach(p=>{ ctx.save(); ctx.translate(0,p.y); drawBaseCellCyb(c=>c.ellipse(0,0,5,10,0,0,Math.PI*2),O); ctx.restore(); }); },
+        function rDesmodesmus() { ctx.rotate(Math.PI/12); for(let i=0; i<4; i++){ ctx.save(); ctx.translate((i-1.5)*10,0); drawBaseCellCyb(c=>c.ellipse(0,0,5,15,0,0,Math.PI*2),G); ctx.restore(); } ctx.beginPath(); ctx.moveTo(-15,-15); ctx.quadraticCurveTo(-25,-25,-25,-8); ctx.moveTo(15,-15); ctx.quadraticCurveTo(25,-25,25,-8); ctx.strokeStyle=C; ctx.stroke(); },
+        function rSmoothCosmarium() { let half=c=>{ c.arc(0,-14,20,Math.PI*0.8,Math.PI*0.2); c.lineTo(4,-1.5); c.lineTo(0,0); c.lineTo(-4,-1.5); c.closePath(); }; drawBaseCellCyb(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); }, P); },
+        function rOocystis4() { drawMucilageCyb(0,0,30); [{x:-10,y:-8,a:-0.2},{x:10,y:-8,a:0.2},{x:-8,y:10,a:0.1},{x:8,y:10,a:-0.1}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); drawBaseCellCyb(c=>c.ellipse(0,0,8,12,0,0,Math.PI*2),G); ctx.restore(); }); },
+        function rNavicula() { ctx.rotate(Math.PI/4); drawBaseCellCyb(c=>{ c.moveTo(0,-38); c.quadraticCurveTo(12,-12,12,0); c.quadraticCurveTo(12,12,0,38); c.quadraticCurveTo(-12,12,-12,0); c.quadraticCurveTo(-12,-12,0,-38); c.closePath(); }, Y); ctx.beginPath(); ctx.moveTo(0,-34); ctx.lineTo(0,34); ctx.strokeStyle=W; ctx.stroke(); },
+        function rPediastrumPlate() { drawBaseCellCyb(c=>{ c.moveTo(0,-28); c.lineTo(8,-24); c.lineTo(12,-32); c.lineTo(16,-20); c.lineTo(28,-16); c.lineTo(24,-4); c.lineTo(32,4); c.lineTo(20,12); c.lineTo(16,24); c.lineTo(4,20); c.lineTo(0,32); c.lineTo(-8,24); c.lineTo(-16,28); c.lineTo(-20,16); c.lineTo(-30,8); c.lineTo(-24,0); c.lineTo(-32,-12); c.lineTo(-20,-16); c.lineTo(-16,-28); c.lineTo(-4,-22); c.lineTo(0,-28); }, G); },
+        function rPairedCells() { ctx.save(); ctx.translate(2,-14); drawBaseCellCyb(c=>c.ellipse(0,0,11,16,0,0,Math.PI*2),G); ctx.restore(); ctx.save(); ctx.translate(-2,14); drawBaseCellCyb(c=>c.ellipse(0,0,10,15,0,0,Math.PI*2),C); ctx.restore(); },
+        function rEudorinaBlob() { drawMucilageCyb(0,0,38); [{x:-20,y:-8},{x:-8,y:-20},{x:8,y:-20},{x:20,y:-8},{x:-20,y:12},{x:-8,y:20},{x:16,y:12}].forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellCyb(c=>c.arc(0,0,6.5,0,Math.PI*2),G); ctx.restore(); }); },
+        function rTaperFilament2() { let len=110; drawBaseCellCyb(c=>{ c.moveTo(-len/2,-4); c.lineTo(len/2,-1); c.arc(len/2,0,1,-Math.PI/2,Math.PI/2); c.lineTo(-len/2,4); c.arc(-len/2,0,4,Math.PI/2,-Math.PI/2); c.closePath(); }, C); },
+        function rDenseCluster2() { let n=[{x:0,y:0},{x:-12,y:-8},{x:12,y:-8},{x:0,y:-18},{x:-8,y:12},{x:10,y:10},{x:-20,y:4},{x:20,y:4}]; n.forEach(p=>{ ctx.save(); ctx.translate(p.x,p.y); drawBaseCellCyb(c=>c.arc(0,0,11,0,Math.PI*2),G); ctx.restore(); }); },
+        function rAngularCosmarium2() { let half=c=>{ c.moveTo(0,-2); c.lineTo(10,-4); c.lineTo(20,-12); c.lineTo(18,-24); c.lineTo(6,-34); c.lineTo(-6,-34); c.lineTo(-18,-24); c.lineTo(-20,-12); c.lineTo(-10,-4); c.lineTo(0,-2); c.closePath(); }; drawBaseCellCyb(c=>{ half(c); ctx.save(); ctx.scale(1,-1); half(c); ctx.restore(); }, P); },
+        function rSpikyStaurastrum2() { let half=c=>{ c.moveTo(0,-4); c.lineTo(6,-6); c.lineTo(20,-12); c.lineTo(28,-22); c.lineTo(30,-20); c.lineTo(25,-14); c.lineTo(32,-10); c.lineTo(24,-10); c.lineTo(12,0); c.lineTo(24,10); c.lineTo(32,10); c.lineTo(25,14); c.lineTo(30,20); c.lineTo(28,22); c.lineTo(20,12); c.lineTo(6,6); c.lineTo(0,4); }; drawBaseCellCyb(c=>{ ctx.beginPath(); half(c); ctx.save(); ctx.scale(-1,-1); half(c); ctx.restore(); }, C); },
+        function rFenestratedPediastrum2() { for(let i=0;i<5;i++){ let a=(i/5)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*12,Math.sin(a)*12); ctx.rotate(a+Math.PI/2); drawBaseCellCyb(c=>{ c.moveTo(-8,6); c.quadraticCurveTo(0,0,8,6); c.lineTo(10,-4); c.quadraticCurveTo(0,0,-10,-4); c.closePath(); },G); ctx.restore(); } for(let i=0;i<10;i++){ let a=(i/10)*Math.PI*2; ctx.save(); ctx.translate(Math.cos(a)*28,Math.sin(a)*28); ctx.rotate(a+Math.PI/2); drawBaseCellCyb(c=>{ c.moveTo(-6,10); c.quadraticCurveTo(0,4,6,10); c.lineTo(11,0); c.lineTo(18,-20); c.lineTo(8,-10); c.lineTo(0,-4); c.lineTo(-8,-10); c.lineTo(-18,-20); c.lineTo(-11,0); c.closePath(); },C); ctx.restore(); } }
+    ];
+
+    let mouseX = -1000, mouseY = -1000;
+    let pageMouseX = -1000, pageMouseY = -1000;
+    let clickedIndex = -1, hoveredIndex = -1;
+
+    const emotionDictionary = [
+        "Serenity", "Euphoria", "Melancholy", "Epiphany", "Awe", "Nostalgia",
+        "Anxiety", "Catharsis", "Ennui", "Sonder", "Vellichor", "Rubatosis",
+        "Kenopsia", "Jouska", "Chrysalism", "Vemödalen", "Anecdoche", "Ellipsism",
+        "Kuebiko", "Lachesism", "Exulansis", "Adronitis", "Rückkehrunruhe", "Nodus Tollens",
+        "Onism", "Liberosis", "Midding", "Altschmerz", "Occhiolism", "Ambedo",
+        "Mauerbauertraurigkeit", "Zenosyne", "Monachopsis", "Énouement", "Pâro", "Desiderium"
+    ];
+
+    panel.addEventListener('mousemove', (e) => {
+        pageMouseX = e.clientX; pageMouseY = e.clientY;
+        const rect = panel.getBoundingClientRect();
+        mouseX = e.clientX - rect.left; mouseY = e.clientY - rect.top;
+        if (tooltip.style.opacity > 0) {
+            tooltip.style.left = (pageMouseX + 15) + 'px';
+            tooltip.style.top = (pageMouseY + 15) + 'px';
+        }
+    });
+
+    panel.addEventListener('mouseleave', () => { mouseX = -1000; mouseY = -1000; });
+    panel.addEventListener('click', () => { clickedIndex = hoveredIndex !== -1 ? hoveredIndex : -1; });
+
+    let time = 0;
+
+    function render() {
+        time += 0.015;
+
+        let targetProgress = isCyberMode ? 1.0 : 0.0;
+        cyberProgress += (targetProgress - cyberProgress) * 0.1;
+        
+        canvasOpt.style.opacity = 1 - cyberProgress;
+        canvasCyb.style.opacity = cyberProgress;
+
+        let tempCycle = 32.5 + Math.sin(time * 0.5) * 12.5;
+        document.getElementById('temp-val').innerText = tempCycle.toFixed(1);
+        document.getElementById('vital-val').innerText = (40 + Math.sin(time * 0.8) * 30).toFixed(0);
+
+        let scale = Math.min(panel.clientWidth / 900, panel.clientHeight / 850, 1.2);
+        let cx = panel.clientWidth / 2;
+        let cy = panel.clientHeight / 2;
+
+        const spaceX = 140, spaceY = 130;
+        const startX = cx - spaceX * 2.5, startY = cy - spaceY * 2.5;
+
+        hoveredIndex = -1;
+        let localMouseX = (mouseX - cx) / scale + cx;
+        let localMouseY = (mouseY - cy) / scale + cy;
+
+        for (let row = 0; row < 6; row++) {
+            for (let col = 0; col < 6; col++) {
+                let offset = row * 0.7 + col * 1.1; 
+                let targetX = startX + col * spaceX + Math.cos(time * 0.6 + offset) * 10;
+                let targetY = startY + row * spaceY + Math.sin(time * 0.8 + offset) * 15;
+                if (Math.hypot(localMouseX - targetX, localMouseY - targetY) < 55) {
+                    hoveredIndex = row * 6 + col;
+                }
+            }
+        }
+
+        if (hoveredIndex !== -1 || clickedIndex !== -1) {
+            panel.style.cursor = 'pointer';
+            let activeIndex = hoveredIndex !== -1 ? hoveredIndex : clickedIndex;
+            tooltip.innerHTML = `EMOTION_ID: [${String(activeIndex).padStart(2, '0')}]<span class="emotion-name">${emotionDictionary[activeIndex]}</span>`;
+            tooltip.style.opacity = 1;
+        } else {
+            panel.style.cursor = 'crosshair';
+            tooltip.style.opacity = 0;
+        }
+
+        if (cyberProgress < 0.99) {
+            ctx = ctxOpt;
+            ctx.clearRect(0, 0, canvasOpt.width, canvasOpt.height);
+            ctx.save();
+            ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy);
+
+            for (let i = 0; i < 36; i++) {
+                let row = Math.floor(i / 6), col = i % 6;
+                let offset = row * 0.7 + col * 1.1; 
+                let x = startX + col * spaceX + Math.cos(time * 0.6 + offset) * 10;
+                let y = startY + row * spaceY + Math.sin(time * 0.8 + offset) * 15;
+
+                ctx.save(); ctx.translate(x, y);
+
+                let isActive = (i === hoveredIndex || i === clickedIndex);
+                if (isActive) {
+                    let breathe = 0.85 + 0.1 * Math.sin(time * 6);
+                    ctx.scale(breathe, breathe);
+                    ctx.beginPath(); ctx.arc(0, 0, 48, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+                    ctx.shadowBlur = 20; ctx.fill(); ctx.shadowBlur = 0; 
+                } else {
+                    ctx.scale(0.85, 0.85);
+                }
+                renderFnsOpt[i](time);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        if (cyberProgress > 0.01) {
+            ctx = ctxCyb;
+            ctx.fillStyle = 'rgba(232, 239, 245, 0.35)';
+            ctx.fillRect(0, 0, canvasCyb.width, canvasCyb.height);
+            ctx.save();
+            ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy);
+
+            for (let i = 0; i < 36; i++) {
+                let row = Math.floor(i / 6), col = i % 6;
+                let offset = row * 0.7 + col * 1.1; 
+                let x = startX + col * spaceX + Math.cos(time * 0.6 + offset) * 10;
+                let y = startY + row * spaceY + Math.sin(time * 0.8 + offset) * 15;
+
+                ctx.save(); ctx.translate(x, y);
+
+                let isActive = (i === hoveredIndex || i === clickedIndex);
+                if (isActive) {
+                    let breathe = 0.85 + 0.1 * Math.sin(time * 6);
+                    ctx.scale(breathe, breathe);
+                    ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 245, 255, 0.1)';
+                    ctx.shadowColor = 'rgba(0, 245, 255, 1)';
+                    ctx.shadowBlur = 25; ctx.fill(); ctx.shadowBlur = 0; 
+                } else {
+                    ctx.scale(0.85, 0.85);
+                }
+                renderFnsCyb[i](time);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        requestAnimationFrame(render);
+    }
+    
+    render();
+</script>
+</body>
+</html>

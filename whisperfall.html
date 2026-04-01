@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>KISHIMISU - WHISPERFALL</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@1,200;1,300&family=Inter:wght@100;300;400;600;700&display=swap');
+
+    body { margin:0; background:#e0e8ef; overflow:hidden; cursor:crosshair; font-family: 'Inter', sans-serif; }
+    
+    /* 统一的无缝返回按钮 */
+    .back-home {
+        position: absolute; top: 40px; left: 50px;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.5em;
+        text-decoration: none; color: #7f8c8d;
+        opacity: 0; animation: fadeIn 1s ease forwards 0.5s;
+        z-index: 100; transition: color 0.3s ease;
+    }
+    .back-home:hover { color: #1a252f; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); filter: blur(5px); }
+        to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    /* 左侧信息面板 */
+    .info-panel {
+        position: absolute; bottom: 60px; left: 50px; z-index: 50; pointer-events: none;
+        display: flex; flex-direction: column; min-width: 300px;
+        opacity: 0; animation: fadeIn 1.5s ease forwards 1s;
+    }
+    .info-meta { font-size: 10px; color: #34495e; font-weight: 700; margin-bottom: 6px; letter-spacing: 1px; display: flex; justify-content: space-between;}
+    .info-text {
+        font-family: 'Crimson Pro', serif; font-style: italic; color: #1a252f; font-size: 16px; font-weight: 400; letter-spacing: 0.5px; line-height: 1.6;
+        padding: 15px 20px; border-left: 3px solid #1a252f; 
+        background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        box-shadow: 6px 6px 0px rgba(26, 37, 47, 0.05);
+    }
+    .info-text span { font-weight: 700; border-bottom: 1px solid rgba(26, 37, 47, 0.2); }
+
+    /* 瀑布流容器 */
+    #waterfall-container {
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; z-index: 10;
+    }
+
+    /* 记忆残影 */
+    .memory-ghost {
+        position: absolute; top: 0; left: 0;
+        border-radius: 4px; background-repeat: no-repeat;
+        will-change: transform, opacity; pointer-events: none; 
+        filter: blur(4px); 
+        opacity: 0; 
+        z-index: 10;
+    }
+
+    /* 记忆主体 */
+    .memory-main {
+        position: absolute; top: 0; left: 0;
+        will-change: transform, opacity;
+        border-radius: 4px; overflow: hidden;
+        pointer-events: auto; cursor: pointer;
+        background-repeat: no-repeat; background-position: center; background-size: cover;
+        box-shadow: 6px 6px 0px rgba(26, 37, 47, 0.05); 
+        z-index: 20; transition: box-shadow 0.4s ease;
+    }
+    .memory-main.hovered {
+        box-shadow: 0 20px 50px rgba(26, 37, 47, 0.2), 0 0 20px rgba(255,255,255,0.6);
+    }
+</style>
+</head>
+<body>
+
+<a href="index.html#menu" class="back-home">← INDEX</a>
+
+<div class="info-panel">
+    <div class="info-meta"><span>DIR_04</span><span>[FLOW_STATE]</span></div>
+    <div class="info-text">
+        Private confessions,<br>
+        pouring as a <span>sharp motion trail.</span>
+    </div>
+</div>
+
+<div id="waterfall-container"></div>
+
+<script>
+const container = document.getElementById('waterfall-container');
+let memories = [];
+
+// ========================================================
+// 已经为你自动填好了 01.jpg 到 17.jpg
+// ========================================================
+const myImages = [
+    '01.jpg', '02.jpg', '03.jpg', '04.jpg', '05.jpg',
+    '06.jpg', '07.jpg', '08.jpg', '09.jpg', '10.jpg',
+    '11.jpg', '12.jpg', '13.jpg', '14.jpg', '15.jpg',
+    '16.jpg', '17.jpg'
+];
+
+// 因为你有 17 张图，为了防止满屏太挤，我把每张图的出现频率稍微调低了一点
+const instancesPerImage = 2; 
+// ========================================================
+
+function initWaterfall() {
+    myImages.forEach(src => {
+        const img = new Image();
+        img.onload = () => {
+            for(let i = 0; i < instancesPerImage; i++) {
+                // 加入随机延迟，让图片错落有致地生成，而不是一下子全掉下来
+                setTimeout(() => {
+                    createSharperMemory(img.src, img.width, img.height);
+                }, Math.random() * 3000); 
+            }
+        };
+        img.onerror = () => console.error(`Failed to load image: ${src} (请检查文件名或后缀是否正确)`);
+        img.src = src;
+    });
+}
+
+function createSharperMemory(src, originalW, originalH) {
+    const targetW = Math.random() * 80 + 160; 
+    const ratio = originalH / originalW;
+    const targetH = targetW * ratio;
+
+    const numGhosts = 3; 
+    const ghostElements = [];
+    for(let i=0; i<numGhosts; i++){
+        const ghost = document.createElement('div');
+        ghost.className = 'memory-ghost';
+        ghost.style.width = `${targetW}px`; ghost.style.height = `${targetH}px`;
+        ghost.style.backgroundImage = `url('${src}')`; ghost.style.backgroundSize = `cover`;
+        container.appendChild(ghost);
+        ghostElements.push(ghost);
+    }
+
+    const main = document.createElement('div');
+    main.className = 'memory-main';
+    main.style.width = `${targetW}px`; main.style.height = `${targetH}px`;
+    main.style.backgroundImage = `url('${src}')`; 
+
+    container.appendChild(main);
+    const depth = Math.random(); 
+
+    const memory = {
+        main: main, ghosts: ghostElements, history: [], 
+        x: Math.random() * (window.innerWidth - targetW - 100) + 50, // 稍微留一点边缘边距
+        y: -targetH - (Math.random() * 1500), // 增加起始高度的随机差，让瀑布更自然
+        
+        speedY: 0, 
+        gravity: (Math.random() * 0.015 + 0.005) * (0.6 + depth * 0.8), 
+        terminalVelocity: (Math.random() * 2.0 + 1.5) * (0.6 + depth * 0.8), 
+        
+        baseScale: 0.6 + depth * 0.5, 
+        baseOpacity: 0.4 + depth * 0.6, 
+        baseH: targetH,
+        isHovered: false, hoverWeight: 0 
+    };
+
+    main.addEventListener('mouseenter', () => { memory.isHovered = true; main.classList.add('hovered'); });
+    main.addEventListener('mouseleave', () => { memory.isHovered = false; main.classList.remove('hovered'); });
+
+    memories.push(memory);
+}
+
+function animate() {
+    const height = window.innerHeight;
+
+    memories.forEach(mem => {
+        mem.hoverWeight += (mem.isHovered ? 0.08 : -0.08);
+        mem.hoverWeight = Math.max(0, Math.min(1, mem.hoverWeight));
+
+        mem.speedY += mem.gravity;
+        if (mem.speedY > mem.terminalVelocity) mem.speedY = mem.terminalVelocity;
+
+        let currentSpeed = mem.speedY * (1 - mem.hoverWeight * 0.95);
+        mem.y += currentSpeed;
+
+        let currentScale = mem.baseScale + mem.hoverWeight * 0.4;
+        let currentOpacity = mem.baseOpacity + mem.hoverWeight * (1 - mem.baseOpacity);
+        let currentX = mem.x; 
+
+        mem.history.unshift({ x: currentX, y: mem.y, scale: currentScale });
+        if (mem.history.length > 40) mem.history.pop();
+
+        mem.main.style.opacity = currentOpacity;
+        mem.main.style.zIndex = 20 + Math.round(mem.hoverWeight * 1000); 
+        mem.main.style.transform = `translate3d(${currentX}px, ${mem.y}px, 0) scale(${currentScale})`;
+
+        mem.ghosts.forEach((ghost, index) => {
+            let interval = Math.max(4, Math.floor(currentSpeed * 4)); 
+            let histIndex = (index + 1) * interval; 
+            
+            if (mem.history[histIndex]) {
+                let h = mem.history[histIndex];
+                let ghostOpacity = (mem.baseOpacity * 0.3 - index * 0.08) * (1 - mem.hoverWeight);
+                ghost.style.transform = `translate3d(${h.x}px, ${h.y}px, 0) scale(${h.scale})`;
+                ghost.style.opacity = Math.max(0, ghostOpacity);
+            } else {
+                ghost.style.opacity = 0;
+            }
+        });
+
+        if (mem.y > height + 200 * currentScale) {
+            mem.y = -mem.baseH - (Math.random() * 800);
+            mem.x = Math.random() * (window.innerWidth - 160);
+            mem.speedY = 0; 
+            mem.history = []; 
+        }
+    });
+
+    requestAnimationFrame(animate);
+}
+
+initWaterfall();
+animate(); 
+</script>
+
+</body>
+</html>

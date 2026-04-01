@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KISHIMISU - Emotion Engine</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@1,200;1,300;1,400&family=Inter:wght@100;300;400;600;700&display=swap');
+
+    /* 维持统一底色，增强呼吸感 */
+    body { 
+        margin: 0; padding: 0; overflow: hidden; 
+        background: #e8eff5; font-family: 'Inter', sans-serif; color: #1a252f; 
+        display: flex; width: 100vw; height: 100vh;
+    }
+
+    @keyframes blurFadeIn {
+        from { opacity: 0; filter: blur(10px); transform: translateY(5px); }
+        to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+
+    /* ==========================================
+       左侧：非对称精致面板
+       ========================================== */
+    #ui-panel {
+        width: 400px; min-width: 400px; height: 100vh;
+        padding: 60px 50px; box-sizing: border-box;
+        display: flex; flex-direction: column; justify-content: space-between;
+        z-index: 10;
+        background: rgba(232, 239, 245, 0.8);
+        border-right: 1px solid rgba(26, 37, 47, 0.05);
+    }
+
+    .back-button {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.5em;
+        text-decoration: none; color: #1a252f;
+        opacity: 0; animation: blurFadeIn 1s ease forwards 0.5s;
+        display: inline-block; margin-bottom: 60px;
+    }
+    .back-button:hover { color: #00f5ff; }
+
+    .slogan-1 {
+        font-family: 'Crimson Pro', serif; font-size: 32px; font-style: italic; font-weight: 300;
+        color: #34495e; display: block; opacity: 0; line-height: 1.1;
+        animation: blurFadeIn 1.5s ease forwards 0.8s;
+    }
+    
+    .slogan-2 {
+        font-size: 12px; font-weight: 300; letter-spacing: 0.04em; color: #7f8c8d;
+        display: block; margin-top: 20px; opacity: 0; line-height: 2;
+        animation: blurFadeIn 1.5s ease forwards 1.2s;
+    }
+    
+    .emphasize { font-weight: 700; color: #1a252f; border-bottom: 1px solid rgba(26, 37, 47, 0.2); }
+
+    .spec-panel {
+        text-align: left; 
+        opacity: 0; animation: blurFadeIn 1.5s ease forwards 1.6s;
+        background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);
+        padding: 30px; border-left: 2px solid #1a252f;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.02);
+        margin-bottom: 30px;
+    }
+
+    .spec-title {
+        font-family: 'Crimson Pro', serif; font-size: 15px; font-style: italic;
+        color: #2c3e50; margin-bottom: 15px; letter-spacing: 0.05em;
+    }
+
+    .spec-content { font-size: 11px; line-height: 2.2; font-weight: 300; color: #7f8c8d; }
+    .spec-content strong { font-weight: 700; color: #34495e; }
+
+    #engine-ui {
+        font-size: 9px; letter-spacing: 2px; color: #95a5a6;
+        opacity: 0; animation: blurFadeIn 1s ease forwards 2s;
+    }
+    #engine-ui b { color: #1a252f; margin-left: 5px; }
+
+    /* ==========================================
+       右侧：沉浸式核心区
+       ========================================== */
+    #video-panel {
+        flex-grow: 1; position: relative; height: 100vh;
+        display: flex; justify-content: center; align-items: center;
+        background: transparent;
+    }
+
+    /* 核心视频容器：悬浮感与呼吸感阴影 */
+    .video-container {
+        position: relative;
+        width: 80%; max-width: 900px;
+        background: #000;
+        z-index: 5;
+        box-shadow: 0 50px 100px rgba(26, 37, 47, 0.15);
+        opacity: 0; animation: blurFadeIn 2s ease forwards 1.5s;
+        padding: 4px; 
+    }
+
+    video {
+        width: 100%; display: block; outline: none; background: #000;
+    }
+
+    /* 装饰元素 */
+    .corner { position: absolute; width: 6px; height: 6px; background: #1a252f; z-index: 10; opacity: 0.8; }
+    .c-tl { top: -2px; left: -2px; } .c-tr { top: -2px; right: -2px; }
+    .c-bl { bottom: -2px; left: -2px; } .c-br { bottom: -2px; right: -2px; }
+
+    .ui-top {
+        position: absolute; top: -12px; left: 30px;
+        background: #e8eff5; padding: 0 15px;
+        font-size: 9px; font-weight: 700; letter-spacing: 0.3em; color: #1a252f;
+    }
+    
+    .ui-bottom {
+        position: absolute; bottom: -12px; right: 30px;
+        background: #e8eff5; padding: 0 15px;
+        font-size: 9px; font-weight: 600; letter-spacing: 0.15em; color: #7f8c8d;
+        display: flex; gap: 20px;
+    }
+    .ui-bottom b { color: #1a252f; font-weight: 700; }
+
+</style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <div>
+        <a href="index.html#menu" class="back-button">← INDEX</a>
+        <div class="floating-concept">
+            <span class="slogan-1">Emotion Engine;</span>
+            <span class="slogan-2">A centralized computational module transforming environmental inputs into <span class="emphasize">real-time visual resonance.</span></span>
+        </div>
+    </div>
+
+    <div>
+        <div class="spec-panel">
+            <div class="spec-title">Observation Log // 03</div>
+            <div class="spec-content">
+                <strong>Ingestion:</strong> Decoding micro-fluctuations in emotional telemetry. <br>
+                <strong>Process:</strong> Biometric signals translated into fluid mathematical dynamics.<br>
+                <strong>Output:</strong> Cognitive state: <strong>ACTIVE</strong>.
+            </div>
+        </div>
+
+        <div id="engine-ui">
+            CORE_LOAD <b id="load-val">0</b>% // V_MEMORY <b id="mem-val">0</b> MB
+        </div>
+    </div>
+</div>
+
+<div id="video-panel">
+    <div class="video-container">
+        <div class="corner c-tl"></div><div class="corner c-tr"></div>
+        <div class="corner c-bl"></div><div class="corner c-br"></div>
+        
+        <div class="ui-top">SYS // CORE_PLAYBACK</div>
+        
+        <video src="vinengine.mp4" autoplay loop controls playsinline></video>
+        
+        <div class="ui-bottom">
+            <span>FREQ: <b id="ui-freq">432.0</b> HZ</span>
+            <span>SIGNAL: <b>STABLE</b></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const freqEl = document.getElementById('ui-freq');
+    setInterval(() => {
+        freqEl.innerText = (432 + (Math.random() * 2 - 1)).toFixed(1);
+    }, 150);
+
+    const memEl = document.getElementById('mem-val');
+    const loadEl = document.getElementById('load-val');
+    setInterval(() => {
+        memEl.innerText = (1024 + Math.random() * 64).toFixed(0);
+        loadEl.innerText = (42 + Math.random() * 12).toFixed(1);
+    }, 1000);
+</script>
+</body>
+</html>

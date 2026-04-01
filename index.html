@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KISHIMISU - 赛博生物房终极集成版</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@1,200;1,300;1,400&family=Inter:wght@100;300;400;600;700&display=swap');
+        
+        body { margin: 0; background: #e8eff5; overflow: hidden; cursor: crosshair; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* 全屏容器控制 */
+        #intro-container { position: absolute; inset: 0; z-index: 20; transition: opacity 2.0s ease; }
+        #menu-container { position: absolute; inset: 0; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 2.5s ease; }
+        
+        #intro-container.hidden { opacity: 0; pointer-events: none; }
+        #menu-container.active { opacity: 1; pointer-events: auto; }
+
+        /* UI 文本排版 - 优化位置避免重叠 */
+        #intro-overlay { 
+            position: absolute; 
+            top: 35%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 80%; max-width: 800px; 
+            text-align: center; pointer-events: none; z-index: 100; 
+        }
+        .intro-text { 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -70%); 
+            width: 100%; font-family: 'Crimson Pro', serif; font-size: 28px; 
+            font-style: italic; font-weight: 300; color: #34495e; 
+            line-height: 1.8; opacity: 0; 
+            transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out; 
+            margin: 0; 
+        }
+        .intro-text.visible { opacity: 1; transform: translate(-50%, -60%); }
+
+        /* 菜单标签 UI */
+        .back-home { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 11px; color: #1a252f; cursor: pointer; padding: 6px 20px; letter-spacing: 5px; transition: 0.3s; border: 1px solid rgba(26, 37, 47, 0.2); opacity: 0.7; text-transform: uppercase; z-index: 10; }
+        .back-home:hover { color: #fff; background: #1a252f; letter-spacing: 8px; opacity: 1; }
+
+        .node-label { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -40%); transition: opacity 0.3s, transform 0.5s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column; min-width: 170px; z-index: 1000; }
+        .node-meta { font-family: 'Inter', sans-serif; font-size: 9px; color: #34495e; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 4px; padding: 0 5px; letter-spacing: 1px; }
+        .node-text { font-family: 'Crimson Pro', serif; font-style: italic; color: #1a252f; font-size: 18px; font-weight: 400; letter-spacing: 1px; padding: 8px 15px; border-left: 3px solid #1a252f; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 6px 6px 0px rgba(26, 37, 47, 0.05); transition: all 0.25s ease; }
+        .node-data { font-family: 'Inter', sans-serif; font-size: 8px; color: #7f8c8d; margin-top: 6px; font-weight: 600; padding: 0 5px; letter-spacing: 1px; }
+        
+        .node-label.active { opacity: 1; transform: translate(-50%, -150%); }
+        .node-label.glow .node-text { background: #1a252f; color: #fff; box-shadow: 0 0 30px rgba(255,255,255,0.6); border-left-color: #00f5ff; }
+    </style>
+</head>
+<body>
+
+<div id="intro-container">
+    <div id="intro-overlay">
+        <p class="intro-text">"Where do these drifting forms come from?"</p>
+        <p class="intro-text">"They are not random illusions, but generated through code —<br>inspired by the morphologies of microalgae observed under a microscope."</p>
+        <p class="intro-text">"Have we ever considered how such sensitive organisms<br>translate light, temperature, and chemical changes<br>into subtle transformations of form?"</p>
+        <p class="intro-text">"If we recreate such “algae” within a computational world,<br>what might they begin to reflect back to us?"</p>
+        <p class="intro-text">"Step inside,<br>and enter this virtual laboratory of emotions."</p>
+    </div>
+    <canvas id="c-intro"></canvas>
+</div>
+
+<div id="menu-container">
+    <canvas id="c-menu"></canvas>
+    <div class="back-home" onclick="window.location.href=window.location.pathname">VIRTUAL PETRI</div>
+
+    <div id="label-0" class="node-label">
+        <div class="node-meta"><span>DIR_01</span><span>[STATIC]</span></div>
+        <div class="node-text">About</div>
+        <div class="node-data">BIO_INFO: IDENTIFIED</div>
+    </div>
+    <div id="label-1" class="node-label">
+        <div class="node-meta"><span>DIR_02</span><span>[LAB_MODE]</span></div>
+        <div class="node-text">MicroAlgae Lab</div>
+        <div class="node-data">O2_LEVEL: 98.4% // GROW_RT</div>
+    </div>
+    <div id="label-2" class="node-label">
+        <div class="node-meta"><span>DIR_03</span><span>[ENGINE]</span></div>
+        <div class="node-text">Emotion Engine</div>
+        <div class="node-data">FREQ: 432HZ // STABLE_WAVE</div>
+    </div>
+    <div id="label-3" class="node-label">
+        <div class="node-meta"><span>DIR_04</span><span>[FLOW]</span></div>
+        <div class="node-text">Whisperfall</div>
+        <div class="node-data">SIGNAL: DEEP_GRAVITY</div>
+    </div>
+</div>
+
+<script>
+// --- 状态与路由控制 ---
+const isSkipIntro = window.location.hash === '#menu';
+if (isSkipIntro) {
+    document.getElementById('intro-container').style.display = 'none';
+    const mc = document.getElementById('menu-container');
+    mc.style.transition = 'none'; mc.style.opacity = '1'; mc.classList.add('active');
+}
+
+// --- 模块 1：序章系统 ---
+(function initIntro() {
+    if (isSkipIntro) return;
+    const canvas = document.getElementById("c-intro");
+    const gl = canvas.getContext("webgl");
+    let mouseX = 0, mouseY = 0, scatterStartTime = -1.0, activeClickId = -1, clickStartTime = 0, isRunning = true;
+
+    window.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect(); mouseX = e.clientX - rect.left; mouseY = rect.height - (e.clientY - rect.top);
+    });
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; gl.viewport(0, 0, canvas.width, canvas.height); }
+    window.addEventListener('resize', resize); resize();
+
+    const vertex = `attribute vec2 position; void main(){ gl_Position = vec4(position, 0.0, 1.0); }`;
+    const fragment = `
+    precision highp float;
+    uniform vec2 iResolution; uniform float iTime; uniform float uClickId; uniform float uClickTime; uniform float uScatterTime;
+    #define rot(a) mat2(cos(a),sin(a),-sin(a),cos(a))
+    vec3 lattice(vec3 p, float id, float c) {
+        p.xy *= rot(iTime * 0.1 + id); float s = 1.2 + c * 0.3; int type = int(mod(id, 4.0));
+        for(int i = 0; i < 2; i++) {
+            if(type == 0) p = abs(p)-s, p.xy *= rot(0.785);
+            else if(type == 1) p = abs(p)-vec3(s*0.4,s*1.6,s*0.4), p.yz *= rot(0.5);
+            else if(type == 2) p = abs(p)-vec3(s*1.6,s*0.3,s*1.0), p.xz *= rot(0.8);
+            else p = abs(p)-(s+0.1), p.xy *= rot(iTime*0.2);
+            p.yz *= rot(0.4);
+        } return p;
+    }
+    float getDist(vec3 p, float id, float c) {
+        vec3 lp = lattice(p, id, c); float shrink = c * 0.8;
+        return mix(length(lp)-(2.4-shrink), max(abs(lp.x),max(abs(lp.y),abs(lp.z)))-(1.8-shrink), sin(iTime+id)*0.5+0.5)*0.6;
+    }
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / min(iResolution.y, iResolution.x);
+        vec3 ro = vec3(0.0, 0.0, -50.0), rd = normalize(vec3(uv, 1.5));
+        float t = 0.0, hitId = -1.0, activeC = 0.0; vec3 lP = vec3(0.0);
+        for(int i = 0; i < 64; i++) {
+            vec3 p = ro + rd * t; float d = 1e10;
+            for(int row = -2; row <= 2; row++) {
+                for(int col = -3; col <= 3; col++) {
+                    float id = float(row + 2) * 7.0 + float(col + 3);
+                    float introA = clamp((iTime-(float(2-row)*0.6+abs(float(col))*0.15))/5.0, 0.0, 1.0);
+                    float sp = mix(45.0, 15.0, 1.0-pow(1.0-clamp((iTime-1.0)/6.0,0.0,1.0), 3.0));
+                    vec3 gP = vec3(float(col)*sp, mix(-90.0-float(2-row)*15.0, float(row)*sp, 0.5-0.5*cos(introA*3.14159)), 0.0);
+                    if (uScatterTime > 0.0) {
+                        float sE = pow(clamp((iTime-uScatterTime)/3.0, 0.0, 1.0), 3.0);
+                        gP.y += mix(0.0, 200.0+float(row + 2) * 80.0, sE); gP.x += mix(0.0, float(col) * 35.0, sE);
+                    }
+                    gP += vec3(sin(iTime*0.4+(float(row+col))*0.5), cos(iTime*0.5+(float(row+col))*0.5), 0.0)*1.2*introA;
+                    float c = (abs(id-uClickId)<0.1 && (iTime-uClickTime)<0.6) ? sin(((iTime-uClickTime)/0.6)*3.14)*pow(1.0-(iTime-uClickTime)/0.6,2.0) : 0.0;
+                    float d_o = getDist(p-gP, id, c);
+                    if(d_o < d) { d=d_o; if(d<0.01){ hitId=id; lP=p-gP; activeC=c; } }
+                }
+            } if(d < 0.001 || t > 90.0) break; t += d;
+        }
+        vec3 col = vec3(0.9, 0.94, 0.97) - length(uv) * 0.15;
+        if(hitId >= 0.0) {
+            vec3 p = ro + rd * t;
+            vec3 baseCol = 0.4 + 0.55 * cos(hitId * 0.8 + iTime * 0.5 + vec3(0.0, 2.0, 4.0));
+            vec3 n = normalize(p - vec3(lP.x > 0. ? 1. : -1., 0., 0.));
+            float diff = smoothstep(-0.8, 1.0, dot(n, normalize(vec3(1, 1, -1))));
+            vec3 body = mix(vec3(0.2, 0.25, 0.3) * 0.4, baseCol, diff);
+            float fres = pow(1.0 + dot(rd, n), 4.0);
+            col = mix(body, vec3(1.0), clamp(fres * (0.35 + activeC * 1.0), 0.0, 0.55));
+            col = mix(col, vec3(1.0, 1.0, 0.9), activeC * 0.4);
+            col = mix(col, col * 0.7, smoothstep(0.4, 0.0, fres) * 0.3);
+        } gl_FragColor = vec4(pow(col, vec3(0.4545)), 1.0);
+    }`;
+
+    const vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, vertex); gl.compileShader(vs);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, fragment); gl.compileShader(fs);
+    const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+    
+    const rL = gl.getUniformLocation(prog, "iResolution"), tL = gl.getUniformLocation(prog, "iTime"), cI = gl.getUniformLocation(prog, "uClickId"), cT = gl.getUniformLocation(prog, "uClickTime"), sT = gl.getUniformLocation(prog, "uScatterTime");
+    const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "position"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    function render(t) {
+        if(!isRunning) return; gl.uniform2f(rL, canvas.width, canvas.height); gl.uniform1f(tL, t * 0.001); gl.uniform1f(cI, activeClickId); gl.uniform1f(cT, clickStartTime); gl.uniform1f(sT, scatterStartTime);
+        gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(render);
+    } requestAnimationFrame(render);
+
+    window.triggerIntroScatter = function() {
+        scatterStartTime = performance.now() * 0.001;
+        setTimeout(() => {
+            document.getElementById('intro-container').classList.add('hidden');
+            document.getElementById('menu-container').classList.add('active');
+            setTimeout(() => { isRunning = false; }, 2000);
+        }, 2500);
+    }
+})();
+
+// --- 模块 2：菜单系统 ---
+(function initMenu() {
+    const canvas = document.getElementById("c-menu"); const gl = canvas.getContext("webgl");
+    let mX = 0, mY = 0, hId = -1, aCId = -1, clkT = 0;
+    
+    window.addEventListener('mousemove', e => { mX = e.clientX; mY = e.clientY; });
+    
+    // 【核心修复：点击跳转逻辑】
+    window.addEventListener('mousedown', () => {
+        if(hId >= 0 && document.getElementById('menu-container').classList.contains('active')) {
+            aCId = hId; clkT = performance.now() * 0.001; 
+            const targetLabel = document.getElementById(`label-${hId}`);
+            if(targetLabel) targetLabel.classList.add('glow');
+
+            const routes = ['about.html', 'lab.html', 'engine.html', 'whisperfall.html'];
+            setTimeout(() => { window.location.href = routes[hId]; }, 500);
+        }
+    });
+
+    const fragment = `
+    precision highp float; uniform vec2 iResolution; uniform float iTime; uniform float uClickId; uniform float uClickTime; uniform float uHoverId;
+    #define rot(a) mat2(cos(a),sin(a),-sin(a),cos(a))
+    vec3 lattice(vec3 p, float id, float c) {
+        p.xy *= rot(iTime * 0.12 + id); float s = 1.3 + c * 0.5; int type = int(id);
+        for(int i = 0; i < 2; i++) {
+            if(type == 0) p = abs(p)-s, p.xy *= rot(0.785);
+            else if(type == 1) p = abs(p)-vec3(0.5,1.8,0.5), p.yz *= rot(0.5);
+            else if(type == 2) p = abs(p)-vec3(1.8,0.4,1.3), p.xz *= rot(0.8);
+            else p.xz *= rot(iTime*0.5), p = abs(p)-vec3(1.2,1.2,0.2), p.xy *= rot(0.3+sin(iTime)*0.2), p.z += sin(p.x*2.0+iTime)*0.2;
+            p.yz *= rot(0.4);
+        } return p;
+    }
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / min(iResolution.y, iResolution.x);
+        vec3 ro = vec3(0.0, 0.0, -45.0), rd = normalize(vec3(uv, 1.5)); float t = 0.0, hitId = -1.0, activeC = 0.0; vec3 lP = vec3(0.0);
+        for(int i = 0; i < 64; i++) {
+            vec3 p = ro + rd * t; float d = 1e10;
+            for(int j = 0; j < 4; j++) {
+                float id = float(j); vec3 pos = vec3((id-1.5)*13.5, 0.0, 0.0) + vec3(sin(iTime*0.4+id*1.3),cos(iTime*0.5+id*0.8),0.0)*2.0;
+                float c = (abs(id-uClickId)<0.1 && (iTime-uClickTime)<0.8) ? sin(((iTime-uClickTime)/0.8)*3.14)*exp(-(iTime-uClickTime)*2.5) : 0.0;
+                float d_o = (length(lattice(p-pos, id, c)) - (2.2-c*1.1)) * 0.6;
+                if(d_o < d) { d = d_o; if(d < 0.01) { hitId = id; activeC = c; lP = p-pos; } }
+            } if(d < 0.001 || t > 90.0) break; t += d;
+        }
+        vec3 col = vec3(0.9, 0.94, 0.97) - length(uv) * 0.15;
+        if(hitId >= 0.0) {
+            vec3 p = ro + rd * t; vec3 baseCol = 0.4 + 0.55 * cos(hitId * 0.8 + iTime * 0.5 + vec3(0.0, 2.0, 4.0));
+            vec3 n = normalize(p - vec3(lP.x > 0. ? 1. : -1., 0., 0.));
+            float diff = dot(n, normalize(vec3(1, 1, -1)))*0.5+0.5;
+            vec3 body = mix(vec3(0.1,0.15,0.2), baseCol, diff);
+            float fres = pow(1.0 + dot(rd, n), 4.0);
+            col = mix(body, vec3(1.0), clamp(fres*(0.4+activeC*1.2), 0.0, 0.6));
+            if(abs(hitId-uHoverId)<0.1) col *= 1.3;
+            col = mix(col, vec3(1.0, 0.98, 0.9), activeC * 0.7);
+        } gl_FragColor = vec4(pow(col, vec3(0.4545)), 1.0);
+    }`;
+
+    const vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, `attribute vec2 position; void main(){ gl_Position=vec4(position,0.0,1.0); }`); gl.compileShader(vs);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, fragment); gl.compileShader(fs);
+    const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); gl.useProgram(prog);
+    const rL = gl.getUniformLocation(prog, "iResolution"), tL = gl.getUniformLocation(prog, "iTime"), cI = gl.getUniformLocation(prog, "uClickId"), cT = gl.getUniformLocation(prog, "uClickTime"), hI = gl.getUniformLocation(prog, "uHoverId");
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "position"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    function draw(t) {
+        const time = t * 0.001; gl.uniform2f(rL, canvas.width, canvas.height); gl.uniform1f(tL, time); gl.uniform1f(cI, aCId); gl.uniform1f(cT, clkT);
+        let foundId = -1;
+        const minRes = Math.min(canvas.width, canvas.height);
+        if (document.getElementById('menu-container').classList.contains('active')) {
+            for(let i=0; i<4; i++){
+                let sX = canvas.width/2 + ((i-1.5)*13.5 + Math.sin(time*0.4+i*1.3)*2.0)/30 * minRes;
+                let sY = canvas.height/2 - (Math.cos(time*0.5+i*0.8)*2.0)/30 * minRes;
+                const lb = document.getElementById(`label-${i}`); 
+                if(lb) {
+                    lb.style.left = `${sX}px`; lb.style.top = `${sY}px`;
+                    if(Math.sqrt((mX-sX)**2+(mY-sY)**2)<70){ foundId = i; lb.classList.add('active'); } else lb.classList.remove('active');
+                }
+            }
+        }
+        hId = foundId; gl.uniform1f(hI, hId); gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(draw);
+    }
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; gl.viewport(0,0,canvas.width,canvas.height); }
+    window.addEventListener('resize', resize); resize(); requestAnimationFrame(draw);
+})();
+
+// --- 文字播放逻辑 ---
+const texts = document.querySelectorAll('.intro-text'); let curIdx = 0;
+function playIntro() {
+    if (curIdx > 0) texts[curIdx-1].classList.remove('visible');
+    if (curIdx < texts.length) {
+        setTimeout(() => { texts[curIdx].classList.add('visible'); setTimeout(playIntro, [3500,5500,5500,5000,4500][curIdx]); curIdx++; }, curIdx === 0 ? 500 : 1500);
+    } else setTimeout(() => { window.triggerIntroScatter(); }, 1000);
+}
+if(!isSkipIntro) playIntro();
+</script>
+</body>
+</html>

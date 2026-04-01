@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>KISHIMISU - About</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@1,200;1,300;1,400&family=Inter:wght@100;300;400;600;700&display=swap');
+
+  body { margin: 0; padding: 0; overflow: hidden; background: #e8eff5; font-family: 'Inter', sans-serif; color: #1a252f; }
+
+  @keyframes blurFadeIn {
+    from { opacity: 0; filter: blur(10px); transform: translateY(5px); }
+    to { opacity: 1; filter: blur(0); transform: translateY(0); }
+  }
+
+  .back-button {
+    position: absolute; top: 40px; left: 50px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5em;
+    text-decoration: none; color: #1a252f;
+    opacity: 0; animation: blurFadeIn 1s ease forwards 0.5s;
+    z-index: 100; transition: color 0.3s;
+  }
+  .back-button:hover { color: #00f5ff; }
+
+  /* 左上角概念 Slogan */
+  .floating-concept {
+    position: absolute;
+    left: 80px; top: 120px;
+    pointer-events: none;
+    z-index: 10;
+    max-width: 500px;
+  }
+  .slogan-1 {
+    font-family: 'Crimson Pro', serif; font-size: 32px; font-style: italic; font-weight: 300;
+    color: #34495e; display: block; opacity: 0; line-height: 1.1;
+    animation: blurFadeIn 1.5s ease forwards 0.8s;
+  }
+  .slogan-2 {
+    font-size: 13px; font-weight: 300; letter-spacing: 0.12em; color: #7f8c8d;
+    display: block; margin-top: 20px; opacity: 0; line-height: 1.8;
+    animation: blurFadeIn 1.5s ease forwards 1.2s;
+  }
+  .emphasize { font-weight: 700; color: #1a252f; border-bottom: 1px solid rgba(26, 37, 47, 0.2); }
+
+  /* ==========================================
+     右下角：强化后的观察日志 (Observation Note)
+     ========================================== */
+  .observation-note {
+    position: absolute; 
+    right: 80px; bottom: 100px; 
+    width: 320px; /* 稍微加宽 */
+    opacity: 0; animation: blurFadeIn 1.5s ease forwards 1.8s;
+    z-index: 10; pointer-events: none;
+  }
+
+  .note-header {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px; font-weight: 700; letter-spacing: 3px;
+    color: #1a252f; text-transform: uppercase;
+    margin-bottom: 15px; display: flex; align-items: center;
+  }
+  .note-header::after {
+    content: ""; flex-grow: 1; height: 1px; background: rgba(26, 37, 47, 0.15); margin-left: 15px;
+  }
+
+  .note-body {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 25px;
+    border-left: 2px solid #1a252f;
+    box-shadow: 20px 20px 60px rgba(0,0,0,0.02);
+  }
+
+  .note-text { 
+    font-size: 11.5px; line-height: 2.2; font-weight: 300; 
+    color: #7f8c8d; 
+    letter-spacing: 0.03em;
+  }
+  .note-text b { font-weight: 700; color: #34495e; }
+
+  #engine-ui {
+    position: absolute; bottom: 40px; left: 50px;
+    font-size: 9px; letter-spacing: 2px; color: #95a5a6;
+    opacity: 0; animation: blurFadeIn 1s ease forwards 2.2s;
+    z-index: 10;
+  }
+  #engine-ui b { color: #1a252f; margin-left: 5px; }
+
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<a href="index.html#menu" class="back-button">← INDEX</a>
+
+<div class="floating-concept">
+  <span class="slogan-1">This glass house is no longer just a petri dish;</span>
+  <span class="slogan-2">it is a centralized computational module transforming environmental inputs into <span class="emphasize">real-time visual resonance.</span></span>
+</div>
+
+<div class="observation-note">
+  <div class="note-header">Observation Log // 01</div>
+  <div class="note-body">
+    <div class="note-text">
+      The organisms inside respond to stimuli like light and temperature. 
+      <b>Is there a mechanism</b> to transform human emotional input into reflective visual feedback? 
+      We recreate such "algae" within a computational world, mirroring the <b>sensitivity of life</b> through code.
+    </div>
+  </div>
+</div>
+
+<div id="engine-ui">
+  VIRTUAL_PETRI // TEMP <b id="temp-val">0</b>°C // VITALITY <b id="vital-val">0</b>%
+</div>
+
+<script>
+let pg;
+let bioElements = [];
+let houseW = 220; 
+let houseH = 200;
+let roofH = 100;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  pg = createGraphics(1024, 1024); 
+  for (let i = 0; i < 80; i++) bioElements.push(new BioElement(pg));
+}
+
+function draw() {
+  background(232, 239, 245); 
+
+  let tempCycle = 32.5 + sin(frameCount * 0.01) * 12.5;
+  let vitality = map(tempCycle, 20, 45, 0.5, 2.5);
+  document.getElementById('temp-val').innerText = tempCycle.toFixed(1);
+  document.getElementById('vital-val').innerText = (map(vitality, 0.5, 2.5, 20, 100)).toFixed(0);
+
+  pg.clear();
+  pg.background(10, 50, 100, 20); 
+  for (let el of bioElements) {
+    el.update(pg, vitality);
+    el.display(pg);
+  }
+
+  orbitControl(2, 2, 0.1);
+  translate(-width * 0.05, 0, 0); 
+
+  rotateY(frameCount * 0.005);
+  rotateX(frameCount * 0.002);
+
+  ambientLight(150); 
+  directionalLight(255, 255, 255, 1, -1, -0.5);
+  pointLight(100, 255, 255, 0, -200, 100);
+
+  textureMode(NORMAL);
+  push();
+    specularMaterial(250);
+    shininess(150);
+    tint(255, 255, 255, 230); 
+    texture(pg);
+    stroke(80, 120, 160, 100);
+    strokeWeight(1.2);
+    drawCompleteHouse(houseW, houseH, roofH);
+  pop();
+}
+
+function drawCompleteHouse(w, h, rh){
+  let hw=w/2, hh=h/2, rTop=-hh-rh;
+  let vT=0, vE=0.4, vB=1; 
+  beginShape(); vertex(-hw, hh,  hw, 0, vB); vertex( hw, hh,  hw, 0.25, vB); vertex( hw,-hh,  hw, 0.25, vE); vertex( 0, rTop, hw, 0.125, vT); vertex(-hw,-hh,  hw, 0, vE); endShape(CLOSE);
+  beginShape(); vertex( hw, hh,  hw, 0.25, vB); vertex( hw, hh, -hw, 0.5, vB); vertex( hw,-hh, -hw, 0.5, vE); vertex( hw,-hh,  hw, 0.25, vE); endShape(CLOSE);
+  beginShape(); vertex( hw, hh, -hw, 0.5, vB); vertex(-hw, hh, -hw, 0.75, vB); vertex(-hw,-hh, -hw, 0.75, vE); vertex( 0, rTop, -hw, 0.625, vT); vertex( hw,-hh, -hw, 0.5, vE); endShape(CLOSE);
+  beginShape(); vertex(-hw, hh, -hw, 0.75, vB); vertex(-hw, hh,  hw, 1.0, vB); vertex(-hw,-hh,  hw, 1.0, vE); vertex(-hw,-hh, -hw, 0.75, vE); endShape(CLOSE);
+  beginShape(); vertex( hw,-hh,  hw, 0.25, vE); vertex( hw,-hh, -hw, 0.5, vE); vertex( 0, rTop, -hw, 0.5, vT); vertex( 0, rTop,  hw, 0.25, vT); endShape(CLOSE);
+  beginShape(); vertex(-hw,-hh, -hw, 0.75, vE); vertex(-hw,-hh,  hw, 1.0, vE); vertex( 0, rTop,  hw, 1.0, vT); vertex( 0, rTop, -hw, 0.75, vT); endShape(CLOSE);
+  beginShape(); vertex(-hw, hh,  hw, 0.75, 0.25); vertex( hw, hh,  hw, 1.0, 0.25); vertex( hw, hh, -hw, 1.0, 0.0); vertex(-hw, hh, -hw, 0.75, 0.0); endShape(CLOSE);
+}
+
+class BioElement{
+  constructor(g){this.init(g); this.x=random(g.width); this.y=random(g.height)}
+  init(g){
+    let types = ['mutant', 'string', 'crystal', 'blob'];
+    this.type = random(types);
+    let palette = ['#00F5FF', '#71FF00', '#FF00E6', '#FFFFFF', '#4D4DFF'];
+    this.baseC = color(random(palette));
+    this.size = random(80, 220); 
+    this.seed = random(5000);
+    this.angle = random(TWO_PI);
+    this.speedX = random(-1.2, 1.2);
+    this.speedY = random(-0.6, 0.6);
+    this.wobbleSpeed = random(0.01, 0.03);
+  }
+  update(g, v){
+    this.x = (this.x + this.speedX * v + g.width) % g.width;
+    this.y = (this.y + this.speedY * v + g.height) % g.height;
+    this.angle += 0.01;
+  }
+  drawCore(g, x, y){
+    g.push(); g.translate(x, y); g.rotate(this.angle);
+    let c = this.baseC;
+    if(this.type === 'mutant'){
+      g.fill(red(c), green(c), blue(c), 60);
+      this.drawExtremeNoise(g, this.size * 0.5, 3.0, 1.2);
+      g.fill(red(c), green(c), blue(c), 180);
+      this.drawExtremeNoise(g, this.size * 0.2, 5.0, 0.8);
+    } 
+    else if(this.type === 'string'){
+      g.stroke(c); g.strokeWeight(2); g.noFill();
+      g.beginShape();
+      for(let i=0; i<10; i++){
+        let nx = noise(this.seed + i*0.2, frameCount*0.02)*this.size - this.size/2;
+        let ny = i * (this.size/8) - this.size/2;
+        g.curveVertex(nx, ny);
+      }
+      g.endShape();
+    }
+    else {
+      g.fill(red(c), green(c), blue(c), 100);
+      this.drawExtremeNoise(g, this.size * 0.3, 8.0, 1.5);
+    }
+    g.pop();
+  }
+  drawExtremeNoise(g, radius, noiseRes, intensity){
+    g.beginShape();
+    for(let a = 0; a < TWO_PI + 0.5; a += 0.15){
+      let n1 = noise(cos(a)*noiseRes + this.seed, sin(a)*noiseRes + frameCount*this.wobbleSpeed);
+      let n2 = noise(cos(a)*noiseRes*2 + this.seed, sin(a)*noiseRes*2 + frameCount*0.05);
+      let n = (n1 * 0.7 + n2 * 0.3);
+      let r = radius * (0.5 + n * intensity); 
+      g.curveVertex(cos(a) * r, sin(a) * r);
+    }
+    g.endShape(CLOSE);
+  }
+  display(g){
+    for(let xOff=-1; xOff<=1; xOff++) 
+      for(let yOff=-1; yOff<=1; yOff++) 
+        this.drawCore(g, this.x + xOff*g.width, this.y + yOff*g.height)
+  }
+}
+
+function windowResized(){resizeCanvas(windowWidth, windowHeight)}
+</script>
+</body>
+</html>
